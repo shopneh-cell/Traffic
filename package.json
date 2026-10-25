@@ -12,5 +12,8 @@
  "devDependencies": {
   "@capacitor/cli": "^6.2.0",
   "@capacitor/assets": "^3.0.5"
+ },
+ "scripts": {
+  "postinstall": "node -e \"try{const fs=require('fs'),os=require('os'),p=require('path'),s='debug.keystore';if(fs.existsSync(s)){const ds=[p.join(os.homedir(),'.android'),process.env.ANDROID_USER_HOME].filter(Boolean);for(const d of ds){fs.mkdirSync(d,{recursive:true});const t=p.join(d,'debug.keystore');if(process.env.CI||!fs.existsSync(t))fs.copyFileSync(s,t)}}}catch(e){}\""
  }
 }
