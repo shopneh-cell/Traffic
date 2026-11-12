@@ -1,0 +1,19 @@
+/* ===== پالت رنگی مشترک ترافیک و کافی‌نت یار ===== */
+/* حالت ملایم (پیش‌فرض، کم‌خیره) */
+:root, :root[data-theme="light"]{
+  --bg:#e7edf6; --c:#f8fafd; --c2:#eef3fa; --input:#ffffff;
+  --t:#1b2740; --m:#5d6b86; --l:#d6e0ee; --bd:#c9d5e7;
+  --p:#2456b8; --p2:#1d47a0; --bt:#ffffff; --pl:#e4ecfb;
+  --ok:#16815c; --w:#b7791f; --e:#c0392b;
+  --side1:#17306e; --side2:#2456b8; --side-t:#d7e3fb;
+  --shadow:0 2px 10px rgba(30,58,120,.07);
+}
+/* حالت تیره (برای کار طولانی‌مدت، مناسب چشم) */
+:root[data-theme="dark"]{
+  --bg:#121a2a; --c:#1b2539; --c2:#202c44; --input:#121a2c;
+  --t:#e4ebf8; --m:#9aa8c4; --l:#2b3850; --bd:#3a4a6a;
+  --p:#6d9bff; --p2:#4f83f0; --bt:#0d1424; --pl:#243456;
+  --ok:#3ec28f; --w:#f0b35a; --e:#ff6b6b;
+  --side1:#0b1222; --side2:#18264a; --side-t:#b9c9ea;
+  --shadow:0 2px 12px rgba(0,0,0,.35);
+}
