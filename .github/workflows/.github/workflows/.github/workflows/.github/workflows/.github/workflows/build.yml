@@ -1,7 +1,6 @@
 name: Build APK
 on:
   push:
-    branches: [main, master]
   workflow_dispatch:
 jobs:
   build:
@@ -15,17 +14,24 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - run: |
+      - name: کپی همه‌ی فایل‌های وب به www
+        run: |
           mkdir -p www assets
-          cp index.html www/index.html
+          cp index.html theme.css mode.js desktop-scan.js desktop-keys.js desktop-sync.js icons.js www/
+          cp -r kafenet www/
           cp icon-*.png assets/
+          test -f www/kafenet/index.html || { echo 'خطا: پوشه‌ی kafenet در مخزن کامل نیست (kafenet/index.html پیدا نشد)'; exit 1; }
+          echo "کافی‌نت یار: $(ls www/kafenet | wc -l) فایل"
+          ls -R www
       - run: npm install
       - run: npx cap add android
       - run: npx capacitor-assets generate --android
         continue-on-error: true
-      - run: |
+      - name: تنظیمات اندروید (حالت‌های مجاز و سطح SDK)
+        run: |
           sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 24/' android/variables.gradle
           sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA"/></manifest>#' android/app/src/main/AndroidManifest.xml
+          node fix-android-cleartext.js
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
