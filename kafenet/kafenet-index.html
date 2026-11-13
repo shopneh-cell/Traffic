@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>کافی‌نت یار</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="../theme.css">
+<script src="../mode.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px Vazirmatn,Tahoma,sans-serif;background:var(--bg);color:var(--t);display:flex;overflow:hidden}
+html{background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+input,select,textarea{background:var(--input);color:var(--t);border:1px solid var(--bd);border-radius:8px;padding:6px 8px}
+.side{width:210px;background:linear-gradient(180deg,var(--side1),var(--side2));color:var(--side-t);padding:16px 10px;display:flex;flex-direction:column;gap:6px;box-shadow:-2px 0 12px rgba(20,40,90,.2)}
+.side h1{font-size:18px;margin:4px 8px 16px;color:#fff}
+.tab{border:0;background:none;text-align:right;padding:12px 14px;border-radius:12px;cursor:pointer;font-size:14px;color:var(--side-t)}
+.tab:hover{background:rgba(255,255,255,.12)}
+.tab.on{background:var(--p);color:var(--bt);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.tab small{display:block;opacity:.7;font-size:11px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{background:var(--c);padding:10px 16px;border-bottom:1px solid var(--l);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:9px 14px;background:linear-gradient(135deg,#2456b8,#1d47a0);color:var(--bt);cursor:pointer;box-shadow:0 2px 6px rgba(36,86,184,.25)}
+.btn.out{background:var(--c);color:var(--p);border:1px solid #b8c9e6;box-shadow:none}
+.btn:disabled{opacity:.45;cursor:default}
+.chip{border:1px solid var(--l);background:var(--c);border-radius:20px;padding:6px 13px;cursor:pointer;font-size:13px}
+.chip.on{background:var(--p);color:var(--bt);border-color:var(--p)}
+.sep{width:1px;height:26px;background:var(--l);margin:0 4px}
+.hint{color:var(--m);font-size:13px;text-align:center;padding:14px}
+.placeholder{background:var(--c);border:1px dashed var(--m);border-radius:18px;padding:40px;text-align:center;color:var(--m);max-width:620px;margin:20px auto}
+.placeholder b{color:var(--t);display:block;font-size:17px;margin-bottom:8px}
+.sec{flex:1;min-height:0;display:flex;flex-direction:column}
+.status{background:var(--c);border-top:1px solid var(--l);padding:8px 16px;color:var(--m);font-size:13px;white-space:pre-line}
+/* سفیدکننده */
+.work{flex:1;min-height:0;display:flex;gap:14px;padding:14px 16px}
+.thumbs{width:150px;overflow:auto;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.th{background:var(--c);border:2px solid transparent;border-radius:12px;padding:6px;cursor:pointer;position:relative}
+.th.on{border-color:var(--p)}
+.th img{width:100%;display:block;border-radius:6px;background:#fff}
+.th small{display:block;text-align:center;color:var(--m);font-size:12px;margin-top:4px}
+.th .x{position:absolute;top:4px;left:4px;background:#0008;color:#fff;border:0;border-radius:8px;width:24px;height:24px;cursor:pointer}
+.stage{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.modes{display:flex;gap:8px;align-items:center}
+.cw{flex:1;min-height:0;background:var(--dark);border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:auto;padding:16px}
+#cv{max-width:100%;max-height:100%;background:#fff;box-shadow:0 4px 18px #0006;border-radius:4px;touch-action:none}
+#cv.edit{cursor:crosshair}
+.empty{color:#ffffffaa;text-align:center;font-size:16px;line-height:2}
+/* عکس‌چین */
+.lay{flex:1;min-height:0;display:grid;grid-template-columns:330px 300px 1fr;gap:14px;padding:14px 16px}
+.panel{background:var(--c);border:1px solid var(--l);border-radius:16px;padding:12px;overflow:auto;min-height:0}
+.panel h3{margin:4px 2px 10px;font-size:14px;color:var(--p)}
+.field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0;font-size:13px}
+.field input,.field select{width:110px;text-align:center}
+.field.wide select{width:150px}
+.lrow{display:flex;align-items:center;gap:8px;padding:6px;border:2px solid transparent;border-radius:12px;cursor:pointer;background:#fff;margin-bottom:8px}
+.lrow.on{border-color:var(--p)}
+.lrow img{width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0}
+.ltxt{flex:1;min-width:0;font-size:12px}
+.ltxt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.ltxt small{color:var(--m)}
+.qty{display:flex;align-items:center;gap:4px}
+.qty button{width:26px;height:26px;border:1px solid #b8c9e6;background:var(--c);border-radius:8px;cursor:pointer;color:var(--p);font-size:16px}
+.qty span{min-width:22px;text-align:center;font-weight:700}
+.del{border:0;background:none;color:var(--e);cursor:pointer;font-size:14px}
+.prev{display:flex;flex-direction:column;gap:8px;min-width:0}
+.prevbox{flex:1;min-height:0;background:var(--dark);border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:auto;padding:14px}
+#lCv{max-width:100%;max-height:100%;background:#fff;box-shadow:0 4px 18px #0006}
+.pnav{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px}
+.info{font-size:12px;color:var(--m);white-space:pre-line;background:var(--c);border:1px solid var(--l);border-radius:12px;padding:8px 10px}
+input[type=checkbox],input[type=radio]{width:20px;height:20px;padding:0;margin:0;accent-color:var(--p)}
+.fwork{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1.2fr;gap:14px;padding:14px 16px}
+.fgrid{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-content:start}
+.fcard{background:var(--c);border:2px solid transparent;border-radius:14px;padding:10px;cursor:pointer;box-shadow:var(--shadow);text-align:center}
+.fcard.on{border-color:var(--p)}
+.fcard .ic{height:96px;display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--c2);border-radius:10px;overflow:hidden}
+.fcard .ic img{max-width:100%;max-height:100%;object-fit:cover}
+.fcard small{display:block;color:var(--m);margin-top:6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fview{background:var(--c);border:1px solid var(--l);border-radius:16px;padding:14px;overflow:auto;min-height:0}
+.fview h3{margin:4px 0 10px;color:var(--p)}
+.ivwork{flex:1;min-height:0;display:grid;grid-template-columns:420px 1fr;gap:14px;padding:14px 16px}
+.ivform{background:var(--c);border:1px solid var(--l);border-radius:16px;padding:12px;overflow:auto}
+.ivprev{background:var(--c2);border-radius:16px;padding:16px;overflow:auto;display:flex;justify-content:center}
+.ivform .field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0;font-size:13px}
+.ivform .field input,.ivform .field select{width:200px}
+.ivform h4{margin:14px 0 6px;color:var(--p);font-size:13px}
+.ivrow{display:grid;grid-template-columns:1fr 60px 90px 110px 24px;gap:4px;margin-bottom:6px;align-items:center}
+.ivrow input{width:100%;padding:5px;font-size:12px}
+.hint{color:var(--m);font-size:13px;text-align:center;padding:14px}
+.dim{color:var(--m);font-size:12px}
+.cform .fl{display:flex;flex-direction:column;gap:3px;margin:6px 0;font-size:13px}
+.cform .fl input,.cform .fl textarea{width:100%}
+.cform .fl.chk{flex-direction:row;justify-content:space-between;align-items:center}
+.cform .fl.chk input{width:auto}
+.cform h4{margin:14px 0 6px;color:var(--p);font-size:13px}
+.calc{background:var(--c2);border:1px solid var(--l);border-radius:10px;padding:10px;margin:10px 0;font-size:13px}
+.pdprev{margin-top:14px;background:#fff;border-radius:10px;padding:6px;overflow:auto}
+.lay .panel input,.lay .panel select{width:110px}
+/* ناحیه‌ی چاپ: فقط محتوای سند چاپ شود */
+#print-area{display:none}
+@media print{
+  body *{visibility:hidden!important}
+  #print-area,#print-area *{visibility:visible!important}
+  #print-area{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}
+}
+
+/* ===== طراحی بزرگ‌تر و آیکون‌دار (ویندوز) ===== */
+html,body{font-size:16px}
+body{font-size:16px;line-height:1.7}
+.side{width:262px;padding:20px 14px;gap:8px}
+.side h1{font-size:22px;margin:6px 10px 22px;display:flex;align-items:center;gap:10px}
+.side h1 .ti.big svg{width:30px;height:30px}
+.tab{display:flex;align-items:center;gap:14px;padding:14px 16px;font-size:16px;border-radius:16px;font-weight:600}
+.tab .ti{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.12)}
+.tab .ti svg{width:24px;height:24px}
+.tab.on .ti{background:var(--pl);color:var(--p)}
+.tab .tt{display:flex;flex-direction:column;line-height:1.35}
+.tab small{font-size:12px;margin-top:2px}
+.top{padding:14px 20px;gap:10px}
+.btn{height:48px;padding:0 20px;font-size:16px;border-radius:14px}
+.chip{height:40px;font-size:15px;padding:0 16px}
+input,select,textarea{height:46px;font-size:16px;padding:0 12px}
+textarea{height:auto;padding:10px 12px}
+.status{font-size:15px;padding:10px 20px}
+.body,.work,.fwork,.lay,.ivwork{padding:18px 20px}
+.thumbs{width:170px}.th small{font-size:13px}
+.fgrid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.fcard{padding:12px}.fcard .ic{height:120px;font-size:46px}.fcard small{font-size:14px}
+.lay{grid-template-columns:380px 340px 1fr}
+.lrow{padding:8px;margin-bottom:10px}.lrow img{width:62px;height:62px}
+.qty button{width:32px;height:32px;font-size:18px}
+.field{font-size:15px;margin:9px 0}
+.ivform .field input,.ivform .field select{width:230px}
+.ivform .field{font-size:15px}
+.ivrow input{padding:7px;font-size:14px}
+.panel h3,.fview h3{font-size:18px}
+.placeholder{font-size:16px}
+.cform h4,.ivform h4{font-size:15px}
+.cform .fl{font-size:15px}
+.calc{font-size:15px}
+
+/* ===== اصلاح آیکون‌ها و کشویی‌های تاریخ ===== */
+svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline-block}
+.btn,.chip{display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.2}
+.btn svg.ic{width:18px;height:18px}
+.tab .ti svg.ic{width:24px;height:24px}
+.h1-ic svg.ic{width:28px;height:28px}
+.dtp{margin:8px 0}
+.dtl{display:block;font-size:15px;margin:6px 0 4px;font-weight:600}
+.dtrow{display:flex;flex-wrap:wrap;gap:6px}
+.dtrow select{width:auto;min-width:86px;height:42px}
+.askov{position:fixed;inset:0;background:rgba(6,12,28,.5);display:flex;align-items:center;justify-content:center;z-index:999}
+.askbox{background:var(--c);border:1px solid var(--l);border-radius:18px;padding:22px;width:420px;max-width:92vw;box-shadow:0 30px 70px rgba(0,0,0,.35)}
+.asktitle{font-size:17px;font-weight:800;margin-bottom:12px;color:var(--p)}
+.askin{width:100%;height:46px;font-size:16px;padding:0 12px}
+.askbtn{display:flex;gap:8px;justify-content:flex-start;margin-top:14px}
+.dsrow{display:flex;align-items:center;gap:10px;margin:6px 0}
+.dsdir{flex:1;direction:ltr;text-align:left;background:var(--c2);padding:8px 10px;border-radius:10px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ===== گروه‌بندی منو و بخش حذف پس‌زمینه ===== */
+.navbtn{display:flex;align-items:center;gap:14px;padding:14px 16px;font-size:16px;border-radius:16px;font-weight:600;border:0;background:none;color:var(--side-t);cursor:pointer;text-align:right;width:100%;margin-top:6px}
+.navbtn:hover{background:rgba(255,255,255,.12)}
+.navbtn.open{background:rgba(255,255,255,.14)}
+.navbtn .ti{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.12)}
+.navbtn .ti svg{width:24px;height:24px}
+.navbtn .tt{display:flex;flex-direction:column;line-height:1.35}
+.navbtn small{font-size:12px;opacity:.8}
+.subnav{display:none;flex-direction:column;gap:4px;padding:2px 0 6px 14px;margin-right:12px;border-right:2px solid rgba(255,255,255,.18)}
+.subnav.open{display:flex}
+.subnav .tab{padding:10px 14px;font-size:15px}
+.bgcw{position:relative}
+#bgCv{max-width:100%;max-height:100%;box-shadow:0 4px 18px #0006;border-radius:6px;touch-action:none}
+#bgCv.brush{cursor:crosshair}
+.lrow{background:var(--c)!important;color:var(--t)}
+.lrow small{color:var(--m)}
+.lrow b{color:var(--t)}
+.bgthumb{width:100%;display:block;border-radius:6px;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/16px 16px}
+@media (max-width:700px){html,body{max-width:100%;overflow-x:hidden}body{display:block!important;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important}.side{width:100%!important;max-width:100%;box-sizing:border-box;flex-direction:row!important;flex-wrap:wrap!important;overflow:visible!important;padding:8px!important;gap:6px;align-items:stretch;position:static;box-shadow:0 2px 10px rgba(20,40,90,.2)}.side h1{display:none!important}.side > div:not(.subnav){display:none!important}.side small{display:none!important}.side .navbtn,.side .tab{min-height:0!important;height:auto!important;padding:10px 12px!important}.side .navbtn{flex:1 1 calc(50% - 6px)}.side .tab{flex:1 1 calc(50% - 6px);min-width:0;white-space:normal;padding:9px 10px!important;text-align:center}.main{display:block!important;min-width:0;width:100%;max-width:100%;box-sizing:border-box}.main img{max-width:100%;height:auto}.main table{display:block;max-width:100%;overflow-x:auto}.top{flex-wrap:wrap;max-width:100%;box-sizing:border-box}.top .btn,.top button{max-width:100%}}
+</style>
+</head>
+<body>
+<aside class="side">
+  <h1><img src="logo.png" alt="" style="width:40px;height:40px;border-radius:11px;box-shadow:0 4px 12px rgba(0,0,0,.3)"> کافی‌نت یار</h1>
+
+  <button class="navbtn" data-group="forms"><span class="ti" data-icon="forms"></span><span class="tt">فرم‌ها و قراردادها<small>فرم، اجاره PS4، ودیعه</small></span></button>
+  <div class="subnav" id="sub-forms">
+    <button class="tab" data-tab="forms">📄 فرم‌های آماده</button>
+    <button class="tab" data-tab="contracts">📑 مدیریت قراردادها</button>
+  </div>
+
+  <button class="navbtn" data-group="photo"><span class="ti" data-icon="scan"></span><span class="tt">عکس یار<small>سفیدکننده · عکس‌چین · حذف پس‌زمینه</small></span></button>
+  <div class="subnav" id="sub-photo">
+    <button class="tab" data-tab="scan">🪄 سفیدکننده</button>
+    <button class="tab" data-tab="layout">🧩 عکس‌چین</button>
+    <button class="tab" data-tab="bg">✂ حذف پس‌زمینه</button>
+  </div>
+
+  <button class="tab" data-tab="invoice"><span class="ti" data-icon="invoice"></span><span class="tt">فاکتور ساز<small>خودسازی · دیگرسازی</small></span></button>
+  <button class="tab" data-tab="sites"><span class="ti" data-icon="forms"></span><span class="tt">ثبت‌نام یار<small>سایت‌های پرکاربرد</small></span></button>
+
+  <button class="navbtn" onclick="openDeskSettings()"><span class="ti" data-icon="set"></span><span class="tt">تنظیمات کافی‌نت یار<small>پوشه‌ی ذخیره، چاپگر، سایت‌ها</small></span></button>
+  <a id="backLink" href="../index.html" style="display:none;color:var(--side-t);padding:12px 16px;text-decoration:none;font-weight:700">↩ بازگشت به برنامه‌ی ترافیک</a>
+  <div style="margin-top:auto;font-size:12px;opacity:.85;padding:6px 8px">Ctrl+T : حالت روشن / تیره · F1 : راهنما</div>
+</aside>
+
+<main class="main">
+  <!-- فرم‌ها -->
+  <section id="tab-forms" class="sec" style="display:none"><div class="top"><button class="btn" id="fAddFile">📂 افزودن فایل (عکس / PDF)</button><button class="btn out" id="fNewText">📝 فرم متنی جدید</button><button class="btn out" id="fBack">← بازگشت</button><input id="fSearch" placeholder="جستجوی فرم… (Ctrl+F)" style="width:260px"><span style="flex:1"></span><span class="hint" style="padding:0">فرم‌ها داخل همین برنامه ذخیره می‌شوند</span></div><div class="fwork"><div class="fgrid" id="fGrid"></div><div class="fview" id="fView"><div class="hint">یک فرم را انتخاب کنید</div></div></div><input type="file" id="fFileIn" accept="image/*,application/pdf" hidden><div class="status" id="fStatus">آماده</div></section>
+
+  <!-- قراردادها -->
+  <section id="tab-contracts" class="sec" style="display:none"><div class="top"><button class="btn" id="cNewPs">🎮 قرارداد اجاره‌ی PS4 (ساعتی)</button><button class="btn" id="cNewDep">🏠 تعهدنامه‌ی ودیعه‌ی مسکن</button><button class="btn out" id="cBack">← بازگشت</button><input id="cSearch" placeholder="جستجو: شماره، نام، کد ملی… (Ctrl+F)" style="width:280px"><span style="flex:1"></span></div><div class="fwork"><div class="fgrid" id="cList"></div><div class="fview" id="cView"><div class="hint">قرارداد جدید بسازید یا از فهرست یکی را باز کنید</div></div></div><div class="status" id="cStatus">آماده</div></section>
+
+  <!-- سفیدکننده -->
+  <section id="tab-scan" class="sec">
+    <div class="top">
+      <button class="btn" id="bAdd">📂 افزودن عکس‌ها</button>
+      <input type="file" id="fIn" accept="image/*" multiple hidden>
+      <button class="btn out" id="bAuto" disabled>🔍 تشخیص خودکار</button>
+      <button class="btn out" id="bAutoAll" disabled>🔍 تشخیص همه</button>
+      <span class="sep"></span>
+      <span id="filters"></span>
+      <label class="chip" style="cursor:pointer"><input type="checkbox" id="fAll" style="width:auto"> روی همه‌ی صفحه‌ها</label>
+      <span style="flex:1"></span>
+      <button class="btn out" id="sUndo">↶ برگشت</button>
+      <button class="btn out" id="bDel" disabled>🗑 حذف صفحه</button>
+      <button class="btn" id="bJpg" disabled>💾 ذخیره این صفحه</button>
+      <button class="btn out" id="bJpgAll" disabled>💾 ذخیره همه (JPG)</button>
+      <button class="btn" id="bPdf" disabled>📄 ذخیره PDF</button>
+    </div>
+    <div class="work">
+      <div class="thumbs" id="thumbs"></div>
+      <div class="stage">
+        <div class="modes">
+          <button class="chip on" id="mRes">نتیجه</button>
+          <button class="chip" id="mEdit">ویرایش گوشه‌ها</button>
+          <span class="hint" id="hint" style="padding:0;margin-right:auto"></span>
+        </div>
+        <div class="cw"><canvas id="cv"></canvas><div class="empty" id="empty">عکس‌های سند را انتخاب کنید<br>(می‌توانید چند عکس را با هم انتخاب کنید)</div></div>
+      </div>
+    </div>
+    <div class="status" id="st">آماده</div>
+  </section>
+
+  <!-- عکس‌چین -->
+  <section id="tab-layout" class="sec" style="display:none">
+    <div class="top">
+      <button class="btn" id="lAdd">📂 افزودن عکس‌ها</button>
+      <input type="file" id="lIn" accept="image/*" multiple hidden>
+      <input id="lSearch" placeholder="جستجو در فهرست عکس‌ها… (Ctrl+F)" style="width:240px">
+      <span class="sep"></span>
+      <button class="chip on" id="lModeNormal">📄 چیدن عادی</button>
+      <button class="chip" id="lModePass">🪪 پرسنلی ساز</button>
+      <button class="btn out" id="lUndo">↶ برگشت</button>
+      <span style="flex:1"></span>
+      <button class="btn out" id="lEach">💾 ذخیره تک‌تک عکس‌ها</button>
+      <button class="btn out" id="lPages">🖼 ذخیره صفحات (JPG)</button>
+      <button class="btn" id="lPdf">📄 ذخیره PDF چیدمان</button>
+    </div>
+    <div class="lay">
+      <div class="panel">
+        <h3>فهرست عکس‌ها (+ / − برای تعداد)</h3>
+        <div id="lList"></div>
+      </div>
+      <div class="panel">
+        <div id="ppBox" style="display:none;background:var(--c2);border:1px solid var(--l);border-radius:12px;padding:10px;margin-bottom:14px">
+          <h3 style="margin:0 0 6px">پرسنلی ساز</h3>
+          <div class="field wide"><span>اندازه‌ی عکس (عرض × ارتفاع)</span>
+            <select id="ppSize"><option value="3x4">۳ × ۴ سانتی‌متر</option><option value="4x6">۴ × ۶ سانتی‌متر</option></select></div>
+          <div class="info">۶۰۰ dpi · کادر مشکی برای برش · هر عکس یک ردیف ۶تایی در A4 · بقیه‌ی صفحه خالی</div>
+        </div>
+        <h3>اندازه‌ی تصویر (Image Size)</h3>
+        <div class="field"><span>عرض (cm)</span><input id="iW" inputmode="decimal"></div>
+        <div class="field"><span>ارتفاع (cm)</span><input id="iH" inputmode="decimal"></div>
+        <div class="field"><span>قفل نسبت ابعاد</span><input type="checkbox" id="iLink" checked></div>
+        <div class="info" id="iPx" style="margin:8px 0"></div>
+        <button class="btn out" id="iSame" style="width:100%">همین اندازه را برای همه‌ی عکس‌ها بگذار</button>
+        <h3 style="margin-top:16px">صفحه‌ی چاپ</h3>
+        <div class="field wide"><span>نوع کاغذ</span>
+          <select id="pPreset"><option value="A3">A3</option><option value="A4">A4</option><option value="A5">A5</option><option value="custom">دلخواه</option></select></div>
+        <div class="field"><span>افقی (landscape)</span><input type="checkbox" id="pLand"></div>
+        <div class="field"><span>عرض کاغذ (cm)</span><input id="pW" inputmode="decimal"></div>
+        <div class="field"><span>ارتفاع کاغذ (cm)</span><input id="pH" inputmode="decimal"></div>
+        <div class="field"><span>حاشیه‌ی بالا (cm)</span><input id="mT" inputmode="decimal"></div>
+        <div class="field"><span>حاشیه‌ی پایین (cm)</span><input id="mB" inputmode="decimal"></div>
+        <div class="field"><span>حاشیه‌ی چپ (cm)</span><input id="mL" inputmode="decimal"></div>
+        <div class="field"><span>حاشیه‌ی راست (cm)</span><input id="mR" inputmode="decimal"></div>
+        <div class="field"><span>فاصله‌ی بین عکس‌ها (cm)</span><input id="pGap" inputmode="decimal"></div>
+        <div class="field"><span>وضوح (dpi)</span>
+          <select id="pDpi"><option value="150">150</option><option value="200">200</option><option value="300">300</option><option value="600">600</option></select></div>
+        <div class="field"><span>چرخش خودکار برای جا شدن</span><input type="checkbox" id="pRot" checked></div>
+      </div>
+      <div class="prev">
+        <div class="prevbox" id="lPrevBox"><canvas id="lCv"></canvas></div>
+        <div class="pnav"><button class="btn out" id="lPrev">‹ قبلی</button><span id="lPageInfo"></span><button class="btn out" id="lNext">بعدی ›</button></div>
+        <div class="info" id="lInfo"></div>
+      </div>
+    </div>
+    <div class="status" id="lStatus">آماده</div>
+  </section>
+
+  <!-- حذف پس‌زمینه -->
+  <section id="tab-bg" class="sec" style="display:none">
+    <div class="top">
+      <button class="btn" id="bgAdd">📂 افزودن عکس</button>
+      <input type="file" id="bgIn" accept="image/*" multiple hidden>
+      <button class="btn" id="bgAuto" disabled>✂ حذف هوشمند پس‌زمینه</button>
+      <span class="sep"></span>
+      <button class="chip on" id="bgBrushNone">👆 بدون قلم</button>
+      <button class="chip" id="bgBrushKeep">🖌 نگه‌دار</button>
+      <button class="chip" id="bgBrushDel">🖌 حذف</button>
+      <label class="chip" style="gap:8px">قلم <input type="range" id="bgSize" min="4" max="60" value="18" style="width:110px"></label>
+      <button class="btn out" id="bgUndo" disabled>↶ برگشت</button>
+      <span style="flex:1"></span>
+      <select id="bgView" class="chip" style="height:40px"><option value="res">نمایش: نتیجه</option><option value="orig">نمایش: اصلی</option><option value="mask">نمایش: ماسک</option></select>
+      <select id="bgBack" class="chip" style="height:40px"><option value="checker">زمینه: شفاف</option><option value="white">زمینه: سفید</option><option value="color">زمینه: رنگ دلخواه</option></select>
+      <input type="color" id="bgColor" value="#2456b8" style="width:44px;height:40px;padding:2px" hidden>
+      <button class="btn out" id="bgSaveAll" disabled>💾 ذخیره همه</button>
+      <button class="btn" id="bgSave" disabled>💾 ذخیره این عکس</button>
+    </div>
+    <div class="work">
+      <div class="thumbs" id="bgThumbs"></div>
+      <div class="stage">
+        <div class="cw bgcw" id="bgWrap"><canvas id="bgCv"></canvas><div class="empty" id="bgEmpty">عکس را انتخاب کنید، سپس «حذف هوشمند» را بزنید.<br>برای اصلاح، با قلم «نگه‌دار» بخشی را که باید بماند و با «حذف» بخشی را که باید پاک شود رنگ کنید.</div></div>
+        <div class="hint" id="bgHint"></div>
+      </div>
+    </div>
+    <div class="status" id="bgStatus">آماده</div>
+  </section>
+
+  <!-- ثبت‌نام یار -->
+  <section id="tab-sites" class="sec" style="display:none"><div class="top"><span style="font-weight:700;font-size:17px;color:var(--p)">ثبت‌نام یار</span><span style="flex:1"></span><button class="btn out" id="siteManage">⚙ مدیریت سایت‌ها</button></div><div class="fwork" style="grid-template-columns:1fr"><div class="fgrid" id="siteGrid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))"></div></div><div class="status">برای باز کردن سایت روی کارت آن بزنید (در مرورگر پیش‌فرض باز می‌شود).</div></section>
+  <!-- فاکتور ساز -->
+  <section id="tab-invoice" class="sec" style="display:none"><div class="top"><button class="chip on" id="ivMode-self">خودسازی (از کالاهای خودم)</button><button class="chip" id="ivMode-free">دیگرسازی (فاکتور دلخواه)</button><span class="sep"></span><span id="ivTpls"></span><span style="flex:1"></span><button class="btn out" id="ivUndo">↶ برگشت</button><button class="btn out" id="ivHist">📚 فاکتورهای ذخیره‌شده</button><button class="btn out" id="ivNew">＋ فاکتور جدید</button><button class="btn" id="ivSave">💾 ذخیره</button><button class="btn" id="ivPrint">🖨 پرینت</button></div><div class="ivwork"><div class="ivform" id="ivForm"></div><div class="ivprev"><div class="ivpaper" id="ivPaper"></div></div></div><div class="status" id="ivStatus">آماده</div></section>
+</main>
+
+<div id="print-area"></div>
+<script src="../icons.js"></script>
+<script src="scanner-core.js"></script>
+<script src="shared.js"></script>
+<script src="app.js"></script>
+<script src="layout.js"></script>
+<script src="ui.js"></script>
+<script src="forms.js"></script>
+<script src="contracts.js"></script>
+<script src="bgcore.js"></script>
+<script src="bg.js"></script>
+<script src="invoice.js"></script>
+<script src="sites.js"></script>
+<script src="keys.js"></script>
+<script>if(!window.desk){var bl=document.getElementById("backLink");if(bl)bl.style.display="block"}</script>
+</body>
+</html>
