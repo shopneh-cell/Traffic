@@ -206,7 +206,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     border:1px solid var(--l);border-radius:12px;padding:8px 10px;font-size:13px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
   .side #mode-btn{position:fixed!important;top:8px;left:8px;z-index:50;width:38px!important;height:38px!important;margin:0!important}
   /* ---- محتوا: تمام‌عرض، ستونی، بدون عرض ثابت ---- */
-  .main{display:block!important;min-width:0;width:100%;max-width:100%;box-sizing:border-box;padding:56px 8px 100px}
+  .main{display:block!important;min-width:0;width:100%;max-width:100%;box-sizing:border-box;padding:56px 8px 150px}
   .sec{flex-direction:column!important;flex-wrap:nowrap!important;grid-template-columns:1fr!important;min-width:0;max-width:100%;box-sizing:border-box}
   .sec .panel,.sec .ivform,.sec .ivprev,.sec .field,.sec h3,.sec h4{width:auto!important;max-width:100%!important;min-width:0!important;
     box-sizing:border-box!important;margin-left:0!important;margin-right:0!important}
@@ -237,6 +237,11 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
   .prev canvas{width:auto!important;height:auto!important}
 }
 
+.rtcv{display:block;margin:0 auto;max-width:100%;touch-action:none;border-radius:12px;background:#222;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.rtbox{text-align:center}
+.rtacts{justify-content:center}
+.rtctl label{display:block;margin:10px 0;font-size:14px}
+.rtctl input[type=range]{width:100%;height:auto;padding:0;accent-color:var(--p);margin-top:6px}
 </style>
 </head>
 <body>
@@ -254,6 +259,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     <button class="tab" data-tab="scan">🪄 سفیدکننده</button>
     <button class="tab" data-tab="layout">🧩 عکس‌چین</button>
     <button class="tab" data-tab="bg">✂ حذف پس‌زمینه</button>
+    <button class="tab" data-tab="retouch">✨ روتوشر</button>
   </div>
 
   <button class="tab" data-tab="invoice"><span class="ti" data-icon="invoice"></span><span class="tt">فاکتور ساز<small>خودسازی · دیگرسازی</small></span></button>
@@ -359,6 +365,35 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     <div class="status" id="lStatus">آماده</div>
   </section>
 
+  <!-- روتوشر: عکس پرسنلی -->
+  <section id="tab-retouch" class="sec" style="display:none">
+    <div class="top">
+      <button class="btn" id="rtPick">📂 انتخاب عکس</button>
+      <button class="btn out" id="rtCam">📷 گرفتن عکس</button>
+      <input type="file" id="rtIn" accept="image/*" hidden>
+      <input type="file" id="rtCamIn" accept="image/*" capture="user" hidden>
+    </div>
+    <div class="top">
+      <button class="chip rt-size on" data-size="34">۳×۴ سانتی‌متر</button>
+      <button class="chip rt-size" data-size="46">۴×۶ سانتی‌متر</button>
+    </div>
+    <div class="panel rtbox">
+      <canvas id="rtCv" class="rtcv"></canvas>
+      <p class="hint" id="rtStatus"></p>
+    </div>
+    <div class="top rtacts">
+      <button class="btn" id="rtAuto" disabled>✨ روتوش خودکار</button>
+      <button class="btn" id="rtSave" disabled>💾 ذخیره‌ی عکس</button>
+    </div>
+    <div class="panel rtctl">
+      <label>روشنایی <input type="range" id="rtBright" min="-50" max="50" value="0"></label>
+      <label>کنتراست <input type="range" id="rtContrast" min="-50" max="50" value="0"></label>
+      <label>نرم‌کردن پوست <input type="range" id="rtSmooth" min="0" max="10" value="0"></label>
+      <label>زوم <input type="range" id="rtZoom" min="1" max="3" step="0.05" value="1"></label>
+    </div>
+    <div id="rtOut"></div>
+  </section>
+
   <!-- حذف پس‌زمینه -->
   <section id="tab-bg" class="sec" style="display:none">
     <div class="top">
@@ -409,5 +444,6 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
 <script src="sites.js"></script>
 <script src="keys.js"></script>
 <script>if(!window.desk){var bl=document.getElementById("backLink");if(bl)bl.style.display="block"}</script>
+<script src="retouch.js"></script>
 </body>
 </html>
