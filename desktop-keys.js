@@ -42,13 +42,7 @@
     };
   }
 
-  // ---------- حالت روشن / تیره ----------
-  function applyTheme(t) { document.documentElement.setAttribute('data-theme', t); }
-  try { applyTheme(localStorage.getItem('theme') || 'light'); } catch (e) {}
-  window.__toggleTheme = function () {
-    var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    applyTheme(t); try { localStorage.setItem('theme', t); } catch (e) {}
-  };
+  // حالت روز/شب و Ctrl+T در www/mode.js است (window.__toggleTheme)
 
   function run(f) { try { f(); } catch (e) { /* ignore */ } }
 
@@ -69,7 +63,7 @@
         'Ctrl+I : فاکتورها\n' +
         'Ctrl+M : محصولات\n' +
         'Ctrl+K : مشتریان\n' +
-        'Ctrl+T : حالت روشن / تیره\n' +
+        'Ctrl+T : حالت روز / شب\n' +
         'Esc : بستن جستجو و پنجره‌ها\n' +
         'F11 : تمام‌صفحه\n' +
         'F1 : همین راهنما');
