@@ -1,10 +1,11 @@
 <!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>ترافیک</title>
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="mode.js"></script>
 <link rel="stylesheet" href="theme.css">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-<style id="ps"></style>
+<style id="ps">@media (max-width:370px){header .row{flex-wrap:wrap;row-gap:6px}}
+</style>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
@@ -536,4 +537,21 @@ function notifMarkSeen(){localStorage.setItem('notifSeen',JSON.stringify(notifSi
 function sls(f){const A=db.i.filter(i=>f(i.t)).slice(0,80);return `<p class="m" style="margin:10px 14px 0"><b>فروش‌های این بازه (${n(A.length)}) — برای فاکتور یا ویرایش لمس کنید</b></p>`+A.map(i=>{const c=db.c.find(x=>x.id==i.cu);return `<div class="card row" onclick="go('show','${i.id}')"><span>${day(i.t)} ${new Date(i.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})}<br><small>${c?esc(c.n):esc(i.cn||'بدون مشتری')} · ${i.no?'فاکتور '+fd(i.no):'بدون فاکتور'}</small></span><b>${n(i.tot)}</b></div>`}).join('')}
 function addC(id){const c=id?db.c.find(x=>x.id==id):{};form(id?'ویرایش مشتری':'مشتری جدید',[{k:'n',l:'نام مشتری / عنوان *',v:c.n},{k:'ph',l:'شماره تماس',v:c.ph},{k:'cd',l:'کد مشتری',v:c.cd},{k:'ad',l:'آدرس',t:'area',v:c.ad}],o=>{if(!o.n.trim())return 'نام را وارد کنید';if(id)Object.assign(c,{n:o.n.trim(),ph:o.ph,cd:o.cd.slice(0,10),ad:o.ad});else{const x={id:'c'+Date.now(),n:o.n.trim(),ph:o.ph,cd:o.cd.slice(0,10),ad:o.ad};db.c.push(x);if(view=='sale')cc=x.id}save();render()})}
 load();hdi();svCfg();if(SV)svBuildLast();if(db.us.some(x=>x.pw)){ROLE='';view='login'}else CU=db.us.find(x=>x.r=='m');render();try{history.replaceState({v:view,a:arg},'')}catch(e){}if(view=='login')bioTry();if(db.ab&&NAT()&&(db.lm||0)>(db.la||0))abSched();if(SV)svStart();
-</script></body></html>
+</script><script>
+/* کافی‌نت یار در اندروید: دکمه در نوار بالا. در ویندوز main.js همین کار را می‌کند. */
+(function(){
+  if(window.desk) return;
+  function addKafe(){
+    var row=document.querySelector('header .row');
+    if(!row||document.getElementById('kafe-m')) return;
+    var a=document.createElement('button');
+    a.id='kafe-m'; a.type='button'; a.className='ib'; a.title='کافی‌نت یار';
+    a.textContent='☕';
+    a.style.cssText='height:38px;width:38px;flex:none;padding:0;border:0;border-radius:12px;background:var(--p);color:var(--bt);font-size:17px;cursor:pointer';
+    a.onclick=function(){ location.href='kafenet/index.html'; };
+    row.appendChild(a);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addKafe); else addKafe();
+})();
+</script>
+</body></html>

@@ -41,10 +41,10 @@
   function build() {
     if (btn) return;
     var st = document.createElement('style');
-    st.textContent = '#mode-btn{width:44px;height:44px;flex:none;border-radius:14px;border:1px solid var(--l);' +
+    st.textContent = '#mode-btn{width:38px;height:38px;flex:none;border-radius:12px;border:1px solid var(--l);' +
       'background:var(--c2);color:var(--t);display:inline-flex;align-items:center;justify-content:center;' +
-      'cursor:pointer;padding:0;margin:0 6px;transition:background .15s,color .15s}' +
-      '#mode-btn svg{width:21px;height:21px}#mode-btn:hover{background:var(--pl);color:var(--p)}';
+      'cursor:pointer;padding:0;margin:0 3px;transition:background .15s,color .15s}' +
+      '#mode-btn svg{width:19px;height:19px}#mode-btn:hover{background:var(--pl);color:var(--p)}';
     document.head.appendChild(st);
     btn = document.createElement('button');
     btn.id = 'mode-btn';
