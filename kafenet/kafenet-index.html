@@ -240,6 +240,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
 .rtcv{display:block;margin:0 auto;max-width:100%;touch-action:none;border-radius:12px;background:#222;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .rtbox{text-align:center}
 .rtacts{justify-content:center}
+.rtsteps{margin:6px 10px;font-size:13px;color:var(--m)}.rtsteps summary{cursor:pointer;font-weight:700;color:var(--p)}.rtsteps li{margin:4px 0;line-height:1.7}
 .rtctl label{display:block;margin:10px 0;font-size:14px}
 .rtctl input[type=range]{width:100%;height:auto;padding:0;accent-color:var(--p);margin-top:6px}
 </style>
@@ -368,7 +369,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
   <!-- روتوشر: عکس پرسنلی -->
   <section id="tab-retouch" class="sec" style="display:none">
     <div class="top">
-      <button class="btn" id="rtPick">📂 انتخاب عکس</button>
+      <button class="btn" id="rtPick">🖼 از گالری</button>
       <button class="btn out" id="rtCam">📷 گرفتن عکس</button>
       <input type="file" id="rtIn" accept="image/*" hidden>
       <input type="file" id="rtCamIn" accept="image/*" capture="user" hidden>
@@ -377,18 +378,39 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
       <button class="chip rt-size on" data-size="34">۳×۴ سانتی‌متر</button>
       <button class="chip rt-size" data-size="46">۴×۶ سانتی‌متر</button>
     </div>
+    <div class="top">
+      <button class="chip rt-pf" data-pf="natural">طبیعی</button>
+      <button class="chip rt-pf" data-pf="fresh">شاداب</button>
+      <button class="chip rt-pf" data-pf="pro">پرسنلی حرفه‌ای</button>
+    </div>
+    <details class="rtsteps"><summary>مراحل روتوش</summary>
+      <ul>
+        <li><b>پوست:</b> تراز سفیدی، کاهش براقی و قرمزی، نرم‌سازی فقط روی پوست</li>
+        <li><b>چهره:</b> روشن‌کردن زیر چشم، سفیدی چشم و دندان (با نقاط کلیدی چهره)</li>
+        <li><b>نور و رنگ:</b> کنتراست کنترل‌شده، روشنایی خودکار برای عکس تیره</li>
+        <li><b>تصویر:</b> وضوح ملایم، کادر دقیق ۳×۴ یا ۴×۶ و خروجی ۳۰۰ dpi</li>
+      </ul>
+    </details>
     <div class="panel rtbox">
       <canvas id="rtCv" class="rtcv"></canvas>
       <p class="hint" id="rtStatus"></p>
     </div>
     <div class="top rtacts">
-      <button class="btn" id="rtAuto" disabled>✨ روتوش خودکار</button>
+      <button class="btn" id="rtAuto" disabled>✨ روتوش هوشمند خودکار</button>
       <button class="btn" id="rtSave" disabled>💾 ذخیره‌ی عکس</button>
+    </div>
+    <div class="top rtacts">
+      <button class="btn out" id="rtCompare" disabled>👁 نمایش قبل / بعد</button>
+      <button class="btn out" id="rtReset" disabled>↺ بازنشانی</button>
     </div>
     <div class="panel rtctl">
       <label>روشنایی <input type="range" id="rtBright" min="-50" max="50" value="0"></label>
-      <label>کنتراست <input type="range" id="rtContrast" min="-50" max="50" value="0"></label>
-      <label>نرم‌کردن پوست <input type="range" id="rtSmooth" min="0" max="10" value="0"></label>
+      <label>کنتراست <input type="range" id="rtContrast" min="-50" max="70" value="0"></label>
+      <label>اشباع رنگ <input type="range" id="rtSatur" min="-50" max="70" value="0"></label>
+      <label>گرمی رنگ <input type="range" id="rtWarm" min="-40" max="40" value="0"></label>
+      <label>نرمی پوست <input type="range" id="rtSmooth" min="0" max="10" value="0"></label>
+      <label>شارپنس (وضوح) <input type="range" id="rtSharp" min="0" max="100" value="0"></label>
+      <label>کاهش نویز <input type="range" id="rtNoise" min="0" max="50" value="0"></label>
       <label>زوم <input type="range" id="rtZoom" min="1" max="3" step="0.05" value="1"></label>
     </div>
     <div id="rtOut"></div>
