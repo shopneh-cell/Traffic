@@ -112,13 +112,14 @@ const day=t=>new Date(t).toLocaleDateString('fa-IR-u-ca-persian');
 const pk=(t,m)=>new Intl.DateTimeFormat('en-u-ca-persian',{year:'numeric',month:'numeric',day:'numeric'}).formatToParts(t).filter(x=>x.type=='year'||x.type=='month'||(!m&&x.type=='day')).map(x=>x.value).join('/');
 const save=()=>{try{if(!SK)db.lm=Date.now();localStorage.setItem(K,JSON.stringify(db));if(SV&&!SAP&&!SHOLD)try{svEnq()}catch(e){}if(!SK)abSched();return 1}catch(e){if(!SW){SW=1;alert('حافظه‌ی برنامه پر شده و اطلاعات جدید ذخیره نشد! همین حالا از تنظیمات پشتیبان بگیرید.')}return 0}};
 function load(){try{db=JSON.parse(localStorage.getItem(K))}catch(e){}
-if(!db){db={no:3720,g:[],s:[],c:[],i:[],x:[],p:[],b:[]};clRun(CLU);save()}db.pf=db.pf||[];db.np=db.np||1001;db.ap=db.ap||['sale','inv','items','cust'];db.pw=db.pw||{m:'',a:''};db.us=db.us||[{id:'u0',n:'مدیریت',pw:db.pw.m||'',r:'m'},...(db.pw.a?[{id:'u1',n:'ادمین',pw:db.pw.a,r:'a'}]:[])];db.units=db.units||['عدد','کیلوگرم','گرم','متر مربع'];if(!db.v2){db.g.forEach(x=>{if(x.co===x.pr)x.co=0});db.v2=1}db.hd=db.hd||{n:'کافی‌نت و تحریر ترافیک',ad:'',ph:'',f:'',lg:''};db.ab=db.ab??1;db.p.forEach((x,i)=>{if(!x.id)x.id='p'+x.t+'_'+i});db.x.forEach((x,i)=>{if(!x.id)x.id='x'+x.t+'_'+i})}
+if(!db){db={no:3720,g:[],s:[],c:[],i:[],x:[],p:[],b:[]};clRun(CLU);save()}db.pf=db.pf||[];db.o=db.o||[];db.np=db.np||1001;db.ap=db.ap||['sale','inv','items','cust'];db.pw=db.pw||{m:'',a:''};db.us=db.us||[{id:'u0',n:'مدیریت',pw:db.pw.m||'',r:'m'},...(db.pw.a?[{id:'u1',n:'ادمین',pw:db.pw.a,r:'a'}]:[])];db.units=db.units||['عدد','کیلوگرم','گرم','متر مربع'];if(!db.v2){db.g.forEach(x=>{if(x.co===x.pr)x.co=0});db.v2=1}db.hd=db.hd||{n:'کافی‌نت و تحریر ترافیک',ad:'',ph:'',f:'',lg:''};db.ab=db.ab??1;db.p.forEach((x,i)=>{if(!x.id)x.id='p'+x.t+'_'+i});db.x.forEach((x,i)=>{if(!x.id)x.id='x'+x.t+'_'+i})}
 const bal=c=>db.i.filter(i=>i.cu==c.id).reduce((a,i)=>a+i.tot-i.pd,0)-db.p.filter(p=>p.cu==c.id).reduce((a,p)=>a+p.a,0);
 const gpf=i=>i.l.reduce((a,l)=>a+nl(l)-l.q*l.co,0);
 const seg=(k,o)=>`<div class="sgs">${o.map(([v,l])=>`<button class="${st[k]==v?'on':''}" onclick="st.${k}='${v}';render()">${l}</button>`).join('')}</div>`;
 const T={home:'',sale:'فروش سریع',items:'محصولات',inv:'فاکتورها',cust:'مشتریان',cu:'مشتری',exp:'هزینه‌ها',rep:'گزارشات',set:'تنظیمات',show:'فاکتور',dash:'خانه',pv:'پیش‌نمایش',ied:'ویرایش فاکتور',buy:'خرید کالا',buyn:'خرید جدید',buyd:'فاکتور خرید',stmt:'گردش حساب'};
 const TL=[['sale','🛒','فروش سریع'],['items','📦','کالا و خدمات'],['buy','🚚','خرید کالا'],['inv','🧾','فاکتورها'],['cust','👥','مشتریان'],['exp','💸','هزینه'],['rep','📊','گزارشات']];
 const V={
+ord(){return ord()},
 home(){const t=Date.now(),ts=db.i.filter(i=>pk(i.t)==pk(t)),lw=db.g.filter(x=>x.mn>0&&x.st<=x.mn),dc=db.c.filter(c=>bal(c)>0);
 return `<div class="card row" style="background:none;box-shadow:none"><button class="btn big" onclick="newSale()">🛒 فروش جدید</button><button class="btn big" style="width:74px" onclick="newSale();scan()">▥</button></div>
 <div class="g kpi"><div class="card"><small>فروش امروز</small><br><b>${n(ts.reduce((a,i)=>a+i.tot,0))}</b></div><div class="card"><small>سود ناخالص امروز</small><br><b style="color:var(--ok)">${n(ts.reduce((a,i)=>a+gpf(i),0))}</b></div></div>
@@ -132,7 +133,7 @@ ${st.dt=='p'?'':`<select id="sm"><option value="نقدی">نقدی</option><opti
 <button class="btn big" style="margin-top:8px" onclick="done()">${st.dt=='p'?'صدور پیش‌فاکتور':'ثبت فروش'} — ${n(tot)} ریال</button></div>`},
 items(){const A=db.g.concat(db.s);return `<div class="tb"><button class="btn" onclick="pf()">+ افزودن</button><button class="btn out" onclick="imp()">⬆ ورود گروهی</button><button class="btn out" onclick="prodX('save')">⬇ خروجی</button></div><div class="tb"><button class="btn out" onclick="st.sm=!st.sm;SEL.clear();render()">${st.sm?'✕ پایان انتخاب':'☑ انتخاب گروهی'}</button><button class="btn out" onclick="clImp()">📥 لیست نهایی</button><button class="btn out" onclick="catMgr()">🗂 مدیریت دسته‌ها</button></div><input class="srch" placeholder="جستجوی نام یا بارکد…" value="${esc(st.f||'')}" oninput="st.f=this.value;dbn(()=>{$('#pl').innerHTML=pls()},150)">${pfc()}${psc()}<p class="m" style="margin:4px 14px">${n(A.length)} محصول · ارزش موجودی (قیمت فروش): ${n(db.g.reduce((a,x)=>a+Math.max(x.st,0)*x.pr,0))} ریال${CC()?' · به بهای تمام‌شده: '+n(db.g.reduce((a,x)=>a+Math.max(x.st,0)*(x.co||0),0))+' ریال':''}</p><div id="pl">${pls()}</div>`},
 inv(){const A=[...db.i.filter(i=>i.no).map(i=>({...i,p:0})),...db.pf.map(i=>({...i,p:1}))].sort((a,b)=>b.t-a.t);
-return `<button class="btn add" onclick="newInv()">+ صدور فاکتور جدید</button>`+(A.map(i=>{const c=db.c.find(x=>x.id==i.cu),ex=i.p&&Date.now()-i.t>864e5;return `<div class="card row" onclick="go('show','${i.id}')"><span>${i.p?'پیش‌فاکتور':'فاکتور فروش'} ${fd(i.no)} <small>${day(i.t)}</small>${ex?' <small style="color:var(--e)">منقضی</small>':''}<br><small>${c?esc(c.n):esc(i.cn||'—')}</small></span><b>${n(i.tot)}</b></div>`}).join('')||'<p class="m" style="text-align:center">هنوز فاکتوری صادر نشده</p>')},
+return `<div class="top" style="padding:6px 10px"><button class="btn out" onclick="histBack()">↩ برگشت</button></div><button class="btn add" onclick="newInv()">+ صدور فاکتور جدید</button>`+(A.map(i=>{const c=db.c.find(x=>x.id==i.cu),ex=i.p&&Date.now()-i.t>864e5;return `<div class="card row" onclick="go('show','${i.id}')"><span>${i.p?'پیش‌فاکتور':'فاکتور فروش'} ${fd(i.no)} <small>${day(i.t)}</small>${ex?' <small style="color:var(--e)">منقضی</small>':''}<br><small>${c?esc(c.n):esc(i.cn||'—')}</small></span><b>${n(i.tot)}</b></div>`}).join('')||'<p class="m" style="text-align:center">هنوز فاکتوری صادر نشده</p>')},
 show(){const[i,p]=cur(),c=db.c.find(x=>x.id==i.cu),q=nums(i),bl=bals(p,i,c,q);
 return `<div class="card" style="font-size:13px"><div style="text-align:center"><small>( ${p?'پیش‌فاکتور':i.no?'فاکتور فروش':'رسید فروش'} )</small><div style="font-size:19px;font-weight:700">${esc(db.hd.n)}</div>${db.hd.ad||db.hd.ph?'<small>'+esc([db.hd.ad,db.hd.ph].filter(Boolean).join(' - '))+'</small>':''}</div>
 <div class="row" style="margin-top:8px;border-top:2px solid var(--l);padding-top:6px"><span>تاریخ: ${sdt(i.t)}</span><span>شماره: ${i.no||'—'}</span></div>
@@ -172,7 +173,7 @@ return `<div class="card row"><span><b>${esc(c.n)}</b><br><small>${esc(c.ph||'')
 `<label style="font-size:13px">روش<select id="vMeth"><option>نقدی</option><option>کارت</option><option>چک</option><option>واریز بانکی</option></select></label>`+
 `<label style="font-size:13px">توضیح<input id="vDesc" placeholder="مثلاً بابت خرید مهر"></label></div>`+
 `<div style="margin-top:10px"><button class="btn" onclick="stAddPay('${c.id}')">ثبت واریز</button></div></div>`},
-cu(){const c=db.c.find(x=>x.id==arg);return `<div class="card"><div class="row"><span><b>${esc(c.n)}</b> <small>${esc(c.ph)} ${esc(c.cd)}</small></span><span class="ib" onclick="addC('${c.id}')">✏️</span></div><div style="margin:8px 0">مانده حساب: <b style="color:var(--e)">${n(bal(c))}</b> ریال</div><div class="g" style="margin:8px 0 0"><button class="btn" onclick="pay('${c.id}')">ثبت پرداخت</button><button class="btn out" onclick="go('stmt','${c.id}')">📑 گردش حساب</button></div></div>`+db.i.filter(i=>i.cu==c.id).map(i=>`<div class="card row" onclick="go('show','${i.id}')"><span>${day(i.t)} ${i.no?'#'+fd(i.no):''}</span><span>مانده ${n(i.tot-i.pd)}</span></div>`).join('')+pays(c)},
+cu(){const c=db.c.find(x=>x.id==arg);return `<div class="card"><div class="row"><span><b>${esc(c.n)}</b> <small>${esc(c.ph)} ${esc(c.cd)}</small></span><span class="ib" onclick="addC('${c.id}')">✏️</span></div><div style="margin:8px 0">مانده حساب: <b style="color:var(--e)">${n(bal(c))}</b> ریال</div><div class="g" style="margin:8px 0 0"><button class="btn" onclick="pay('${c.id}')">ثبت پرداخت</button><button class="btn out" onclick="go('stmt','${c.id}')">📑 گردش حساب</button></div></div>`+ordHist(c)+db.i.filter(i=>i.cu==c.id).map(i=>`<div class="card row" onclick="go('show','${i.id}')"><span>${day(i.t)} ${i.no?'#'+fd(i.no):''}</span><span>مانده ${n(i.tot-i.pd)}</span></div>`).join('')+pays(c)},
 exp(){return `<button class="btn add" onclick="addX()">+ ثبت هزینه</button>`+db.x.map(x=>`<div class="card row"><span>${esc(x.n)}<br><small>${esc(x.cat||'')} · ${day(x.t)}</small></span><b>${n(x.a)}</b></div>`).join('')},
 dash(){const T0=sdt(Date.now()),td=db.i.filter(i=>sdt(i.t)==T0),exT=db.x.filter(x=>sdt(x.t)==T0).reduce((a,x)=>a+x.a,0),sT=td.reduce((a,i)=>a+i.tot,0),gT=td.reduce((a,i)=>a+i.l.reduce((s,l)=>s+nl(l)-l.q*l.co,0),0),
 lw=db.g.filter(x=>x.mn>0&&x.st<=x.mn),dc=db.c.map(c=>({c,b:bal(c)})).filter(x=>x.b>0).sort((a,b)=>b.b-a.b),
@@ -207,11 +208,22 @@ return(M?`<div class="card"><b>کاربران</b><small style="display:block;mar
 +(M?svCard()+`<div class="card"><b>سربرگ و توضیحات فاکتور</b><small style="display:block;margin:4px 0">${esc(db.hd.n)}${db.hd.ph?' · '+esc(db.hd.ph):''}</small><button class="btn out" onclick="hdf()">✏️ ویرایش سربرگ</button></div><div class="card"><b>پشتیبان‌گیری</b>${abUI()}<small style="display:block;margin:4px 0">${db.lb?'آخرین پشتیبان: '+day(db.lb)+'. ':'هنوز پشتیبان نگرفته‌اید. '}حافظه‌ی برنامه ${fd(PCT())}٪ پر است. اطلاعات فعلی: ${csum(cnt(db))}. فایل پشتیبان همه‌ی اطلاعات، رمزها و تنظیمات را دارد؛ آن را جای امن نگه دارید. در گوشی دیگر یا نسخه‌ی ویندوز هم باز می‌شود.</small><div class="g" style="margin:8px 0 0"><button class="btn" onclick="bkSave()">💾 به‌روزرسانی فایل پشتیبان</button><button class="btn out" onclick="bkShare()">📤 ارسال</button></div><button class="btn out" style="margin-top:8px" onclick="bkRestore()">♻️ بازیابی از فایل پشتیبان</button></div>`:'')+(NAT()?`<div class="card"><b>ورود با اثر انگشت</b><small style="display:block;margin:4px 0">${NAT()?'بعد از فعال‌سازی، با اثر انگشت وارد می‌شوید (رمز هم کار می‌کند). تا وقتی گوشی قفل نشده، دوباره رمز یا اثر انگشت نمی‌خواهد.':'این امکان فقط در نسخه‌ی اندروید است.'}</small>${NAT()?`<button class="btn ${bo?'out':''}" style="margin-top:8px" onclick="bioSet()">${bo?'غیرفعال‌سازی اثر انگشت':'فعال‌سازی برای '+esc(CU?CU.n:'')}</button>`:''}</div>`:'')
 +(M&&!SV?`<div class="card"><button class="btn" style="background:var(--e);color:#fff" onclick="ask('همه‌ی اطلاعات پاک شود؟',()=>{try{localStorage.removeItem(K)}catch(e){}load();go('dash')})">پاک‌کردن همه‌ی اطلاعات (برای تست)</button></div>`:'')},
 login(){return `<div class="card" style="margin-top:30px"><img class="logo" src="${document.querySelector('.logo').src}" style="height:60px;display:block;margin:0 auto 12px"><input id="lp" type="password" placeholder="رمز عبور" onkeydown="event.key=='Enter'&&lg()"><button class="btn big" style="margin-top:10px" onclick="lg()">ورود</button>${db.bio&&NAT()?'<button class="btn out" style="margin-top:8px" onclick="bioTry()">🔓 ورود با اثر انگشت</button>':''}</div>`}};
-const NAV=[['dash','🏠','خانه'],['sale','🧾','فروش'],['inv','📄','فاکتورها'],['items','📦','محصولات'],['cust','👥','مشتریان'],['buy','🚚','خرید'],['exp','💳','هزینه‌ها'],['rep','📊','گزارش'],['set','⚙️','تنظیمات']],BASE={pv:'inv',ied:'inv',show:'inv',cu:'cust',stmt:'cust',buyn:'buy',buyd:'buy',home:'sale'},can=k=>k=='login'||(ROLE&&(k=='set'||k=='scan'||k=='dash'))||ROLE=='m'||db.ap.includes(k);
+const NAV=[['dash','🏠','خانه'],['sale','🧾','فروش'],['inv','📄','فاکتورها'],['items','📦','محصولات'],['cust','👥','مشتریان'],['buy','🚚','خرید'],['ord','📋','سفارشات'],['exp','💳','هزینه‌ها'],['rep','📊','گزارش'],['set','⚙️','تنظیمات']],BASE={pv:'inv',ied:'inv',show:'inv',cu:'cust',stmt:'cust',buyn:'buy',buyd:'buy',home:'sale'},can=k=>k=='login'||(ROLE&&(k=='set'||k=='scan'||k=='dash'))||ROLE=='m'||db.ap.includes(k);
 function render(){const L=view=='login',vb=BASE[view]||view;$('#app').innerHTML=V[view]();$('#back').style.display=BASE[view]&&view!='home'?'':'none';$('#nav').style.display=L?'none':'';
 $('#nav').innerHTML=NAV.filter(x=>can(x[0])).map(([k,i,l])=>`<a class="${vb==k?'on':''}" onclick="${k=='scan'?'camTab()':`go('${k}')`}"><i>${i}</i>${l}</a>`).join('');$('#role').textContent=(ROLE=='m'?'پنل مدیریت':ROLE=='a'?(CU?CU.n:'ادمین'):'')+(SV?(SVOK?' 🟢':' 🔴'):'');
 const a=notifUnseen();$('#bell').innerHTML='🔔'+(a?`<i>${n(a)}</i>`:'');view=='buyn'&&pcalc();view=='ied'&&ecalc();view=='pv'&&pvgen();camUI();scrollTo(0,0)}
 function go(v,a){camOff();if(!can(BASE[v]||v))return alert('این بخش برای پنل ادمین فعال نیست');st.ed=st.dl=st.f='';if(v!='items'){st.sm=0;SEL.clear()}if(v!='sale')st.dt='q';const p0=view,ch=v!=view||a!==arg;view=v;arg=a;$('#sr').innerHTML='';$('#q').value='';$('#sbar').style.display='none';render();if(ch&&!NOPUSH)try{(p0=='login'||v=='login'?history.replaceState:history.pushState).call(history,{v,a},'')}catch(e){}}
+
+// ---------- مشتری: سوابق سفارش‌ها و صدور فاکتور ----------
+function ordHist(c){
+  const A=(db.o||[]).filter(o=>o.cu==c.id);
+  const head=`<div class="card row"><span><b>📋 سوابق سفارش‌ها (${n(A.length)})</b></span><button class="btn" style="width:auto;padding:0 14px" onclick="invFor('${c.id}')">🧾 صدور فاکتور</button></div>`;
+  return head+(A.length?A.map(o=>`<div class="card row" onclick="go('ord')"><span>${esc(o.title||'سفارش')}<br><small>کد ${esc(o.code)}${o.cat?' · '+esc(o.cat):''} · ${day(o.t)}</small></span><span class="chip ${o.done?'on':''}" style="margin:0">${o.done?'انجام شد':'منتظر'}</span></div>`).join(''):'<p class="m" style="margin:8px 14px">برای این مشتری سفارشی ثبت نشده است.</p>');
+}
+// صدور فاکتور با مشتری از پیش انتخاب‌شده
+function invFor(id){ cart=[]; cc=id; st.dt='f'; go('sale'); }
+// برگشت به صفحه‌ی قبل (تاریخچه‌ی برنامه)
+function histBack(){ if(history.length>1) history.back(); else back(); }
 function newInv(){cart=[];cc='';st.dt='f';go('sale');$('#q').focus()}
 function newSale(){cart=[];cc='';st.dt='q';go('sale');$('#q').focus()}
 function add(k,id){const o=db[k].find(x=>x.id==id),l=cart.find(x=>x.id==id);l?l.q++:cart.push({k,id,n:o.n,q:1,pr:o.pr,co:o.co||0});go('sale')}
@@ -339,7 +351,76 @@ ${I.upd.length?'<b>نمونه‌ی به‌روزرسانی‌ها</b>'+I.upd.sli
 ${I.add.length?'<b style="display:block;margin-top:8px">نمونه‌ی محصولات جدید</b>'+I.add.slice(0,8).map(a=>ln(a.n,n(a.pr))).join(''):''}
 ${I.add.length+I.upd.length?'':'<p class="m">تغییری برای اعمال نیست.</p>'}<div class="g" style="margin:12px 0 0"><button class="btn" onclick="impApply()">✓ تأیید و اعمال</button><button class="btn out" onclick="mc()">لغو</button></div></div>`;m.style.display='flex'}
 function impApply(){const I=IMP;mc();I.upd.forEach(({o,ch})=>Object.assign(o,ch));let a=0;I.add.forEach(x=>{db.g.push({id:'g'+Date.now()+'_'+(a++),n:x.n,cd:String(Math.max(1000,...db.g.map(y=>+y.cd||0))+1),bc:'',co:x.sale?0:x.pr,pr:x.pr,st:x.q,mn:0,u:'عدد'})});save();render();alert(n(I.add.length)+' محصول جدید اضافه و '+n(I.upd.length)+' محصول به‌روزرسانی شد.')}
-function alerts(){camOff();notifMarkSeen();const lw=db.g.filter(x=>x.mn>0&&x.st<=x.mn),dc=db.c.filter(c=>bal(c)>0);$('#md').innerHTML=`<div class="mb"><div class="row"><b>اعلانات</b><span class="ib" onclick="mc()">✕</span></div>${lw.length?`<p style="color:var(--w)"><b>⚠ کم‌موجودی (${n(lw.length)})</b></p>`+lw.slice(0,15).map(x=>`<div>${esc(x.n)} — ${n(x.st)}</div>`).join(''):''}${dc.length?`<p style="color:var(--e)"><b>🔴 ${n(dc.length)} مشتری بدهکار — جمعاً ${n(dc.reduce((a,c)=>a+bal(c),0))} ریال</b></p>`:''}${ROLE=='m'&&(!db.lb||Date.now()-db.lb>6048e5)?'<p style="color:var(--w)"><b>⚠ پشتیبان‌گیری انجام نشده یا بیش از ۷ روز گذشته است (تنظیمات ← پشتیبان‌گیری)</b></p>':''}${PCT()>70?'<p style="color:var(--e)"><b>⚠ حافظه‌ی برنامه بیش از ۷۰٪ پر است؛ حتماً پشتیبان بگیرید.</b></p>':''}${lw.length+dc.length?'':'<p class="m">اعلانی نیست</p>'}</div>`;$('#md').style.display='flex'}
+
+// ================= سفارشات =================
+var ORDS='open', ORDC='';   // فیلتر وضعیت و دسته (در حافظه‌ی این صفحه؛ داده در db.o ذخیره می‌شود)
+function ordCode(){ return 'SF-'+Date.now().toString(36).toUpperCase().slice(-4)+(Math.random()*36|0).toString(36).toUpperCase()+(Math.random()*36|0).toString(36).toUpperCase(); }
+function ordSet(s){ ORDS=s; render(); }
+function ordCat(c){ ORDC=c||''; render(); }
+function ordCard(o){
+  const cu=db.c.find(x=>x.id==o.cu), who=cu?cu.n:(o.cn||'بدون مشتری');
+  return `<div class="card"><div class="row"><div><b>${esc(o.title||'سفارش')}</b><br><small>کد: ${esc(o.code)} · ${esc(who)}${o.cat?' · '+esc(o.cat):''}</small></div><span class="chip ${o.done?'on':''}" style="margin:0">${o.done?'✔ انجام شد':'⏳ منتظر'}</span></div><small>${o.due?'تحویل: '+esc(o.due)+' · ':''}${o.amt?'مبلغ: '+n(o.amt)+' ریال':''}</small><div style="display:flex;gap:6px;margin-top:8px"><button class="btn out" style="flex:1;width:auto;margin:0" onclick="ordToggle('${o.id}')">${o.done?'↩ برگردان':'✔ انجام شد'}</button><button class="btn out" style="flex:1;width:auto;margin:0" onclick="ordPrint('${o.id}')">🖨 چاپ</button><button class="btn out" style="flex:0 0 52px;width:52px;margin:0" onclick="ordDel('${o.id}')">🗑</button></div></div>`;
+}
+function ord(){
+  const all=db.o||[];
+  const nOpen=all.filter(o=>!o.done).length, nDone=all.length-nOpen;
+  const cats=[...new Set(all.map(o=>o.cat).filter(Boolean))];
+  const list=all.filter(o=>(ORDS=='all'||(ORDS=='done'?o.done:!o.done))&&(!ORDC||o.cat==ORDC));
+  return `<div class="card row" style="background:none;box-shadow:none"><b>📋 سفارشات</b><button class="btn" onclick="ordForm()">+ سفارش جدید</button></div>`+
+    `<div class="top" style="flex-wrap:wrap"><button class="chip ${ORDS=='open'?'on':''}" onclick="ordSet('open')">انجام نشده (${n(nOpen)})</button><button class="chip ${ORDS=='done'?'on':''}" onclick="ordSet('done')">انجام شده (${n(nDone)})</button><button class="chip ${ORDS=='all'?'on':''}" onclick="ordSet('all')">همه</button></div>`+
+    `<div class="top" style="flex-wrap:wrap"><button class="chip ${!ORDC?'on':''}" onclick="ordCat('')">همه‌ی دسته‌ها</button>${cats.map(c=>`<button class="chip ${ORDC==c?'on':''}" data-c="${esc(c)}" onclick="ordCat(this.dataset.c)">${esc(c)}</button>`).join('')}</div>`+
+    (list.length?list.map(ordCard).join(''):'<p class="m" style="margin:14px">سفارشی در این فهرست نیست.</p>');
+}
+function ordForm(){
+  const cs=db.c.map(c=>`<option value="${c.id}">${esc(c.n)}</option>`).join('');
+  const cats=[...new Set((db.o||[]).map(o=>o.cat).filter(Boolean))];
+  $('#md').innerHTML=`<div class="mb"><div class="row"><b>سفارش جدید</b><span class="ib" onclick="mc()">✕</span></div>`+
+    `<label class="fl">مشتری</label><select id="oCu"><option value="">بدون مشتری (نام دستی)</option>${cs}</select>`+
+    `<label class="fl">نام دستی (اگر مشتری ثبت نشده)</label><input id="oCn" placeholder="مثلاً آقای رضایی">`+
+    `<label class="fl">شرح سفارش</label><textarea id="oT" rows="3" placeholder="مثلاً ۲۰ عدد فتوکپی رنگی"></textarea>`+
+    `<label class="fl">دسته‌بندی</label><input id="oCat" list="oCats" placeholder="مثلاً چاپ، تایپ، کپی"><datalist id="oCats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`+
+    `<label class="fl">تاریخ تحویل (اختیاری)</label><input id="oDue" placeholder="مثلاً ۱۴۰۴/۰۹/۲۰">`+
+    `<label class="fl">مبلغ (ریال، اختیاری)</label><input id="oAmt" type="number" inputmode="numeric">`+
+    `<div class="top"><button class="btn" onclick="ordSave()">ثبت سفارش</button><button class="btn out" onclick="mc()">لغو</button></div></div>`;
+  $('#md').style.display='flex';
+}
+function ordSave(){
+  const t=$('#oT').value.trim(); if(!t) return alert('شرح سفارش را بنویسید.');
+  const cu=$('#oCu').value, cn=$('#oCn').value.trim();
+  const rec={id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), code:ordCode(), cu:cu||'', cn:cu?'':cn,
+    cat:$('#oCat').value.trim(), title:t, due:$('#oDue').value.trim(), amt:+$('#oAmt').value||0, done:false, t:Date.now()};
+  db.o=db.o||[]; db.o.unshift(rec); save(); mc(); render();
+}
+function ordToggle(id){ const o=(db.o||[]).find(x=>x.id==id); if(!o) return; o.done=!o.done; o.dt=o.done?Date.now():0; save(); render(); }
+function ordDel(id){ if(!confirm('این سفارش حذف شود؟')) return; db.o=(db.o||[]).filter(x=>x.id!=id); save(); render(); }
+function ordPendingHtml(){
+  const p=(db.o||[]).filter(o=>!o.done); if(!p.length) return '';
+  return `<p style="color:var(--w)"><b>📋 سفارش‌های انجام نشده (${n(p.length)})</b></p>`+p.slice(0,20).map(o=>{const cu=db.c.find(x=>x.id==o.cu);return `<div onclick="mc();go('ord')" style="padding:6px 0;border-bottom:1px solid var(--l)">${esc(o.code)} — ${esc(o.title||'')} <small>(${esc(cu?cu.n:(o.cn||'بدون مشتری'))})</small></div>`}).join('');
+}
+function ordWrap(x,s,px,py,maxW,lh){ const words=String(s||'').split(/\s+/); let line='', y=py; for(const w of words){ const t=line?line+' '+w:w; if(x.measureText(t).width>maxW&&line){ x.fillText(line,px,y); line=w; y+=lh; } else line=t; } if(line){ x.fillText(line,px,y); y+=lh; } return y; }
+function ordCanvas(o){
+  const c=document.createElement('canvas'); c.width=840; c.height=1190; const x=c.getContext('2d');
+  const F='Vazirmatn, Tahoma, sans-serif';
+  x.fillStyle='#fff'; x.fillRect(0,0,840,1190); x.direction='rtl'; x.textAlign='right'; x.fillStyle='#111';
+  x.font='bold 56px '+F; x.fillText('سفارش', 800, 110);
+  x.fillStyle='#2f5bea'; x.font='bold 46px '+F; x.fillText('کد سفارش: '+o.code, 800, 190);
+  x.fillStyle='#111';
+  const cu=db.c.find(q=>q.id==o.cu), who=cu?cu.n:(o.cn||'—');
+  let y=270; const line=(l,v)=>{ x.font='bold 32px '+F; x.fillText(l+': '+v, 800, y); y+=58; };
+  line('مشتری', who); line('دسته', o.cat||'—'); line('تاریخ ثبت', new Date(o.t).toLocaleDateString('fa-IR'));
+  line('تحویل', o.due||'—'); line('وضعیت', o.done?'انجام شده':'انجام نشده'); if(o.amt) line('مبلغ', n(o.amt)+' ریال');
+  y+=30; x.font='bold 34px '+F; x.fillText('شرح سفارش:', 800, y); y+=52;
+  x.font='32px '+F; ordWrap(x,o.title,800,y,720,50);
+  x.font='22px '+F; x.fillStyle='#666'; x.fillText('تاریخ چاپ: '+new Date().toLocaleString('fa-IR'), 800, 1140);
+  return c;
+}
+async function ordPrint(id){
+  const o=(db.o||[]).find(x=>x.id==id); if(!o) return;
+  const c=ordCanvas(o), bl=mkpdf([c],420,595);
+  if(NAT()){ try{ await plug('TrafficScanner').printPdf({data:await b64(bl),name:'Order-'+o.code,size:'A5'}) }catch(e){ alert('پرینت ممکن نشد: '+(e.message||e)) } }
+  else { const d=document.createElement('div'); d.id='pp'; d.innerHTML=`<img src="${c.toDataURL('image/jpeg',.92)}">`; document.body.appendChild(d); $('#ps').textContent='@page{size:A5;margin:0}'; setTimeout(()=>{window.print(); setTimeout(()=>d.remove(),1500)},100) }
+}
+function alerts(){camOff();notifMarkSeen();const lw=db.g.filter(x=>x.mn>0&&x.st<=x.mn),dc=db.c.filter(c=>bal(c)>0);$('#md').innerHTML=`<div class="mb"><div class="row"><b>اعلانات</b><span class="ib" onclick="mc()">✕</span></div>${lw.length?`<p style="color:var(--w)"><b>⚠ کم‌موجودی (${n(lw.length)})</b></p>`+lw.slice(0,15).map(x=>`<div>${esc(x.n)} — ${n(x.st)}</div>`).join(''):''}${dc.length?`<p style="color:var(--e)"><b>🔴 ${n(dc.length)} مشتری بدهکار — جمعاً ${n(dc.reduce((a,c)=>a+bal(c),0))} ریال</b></p>`:''}${ROLE=='m'&&(!db.lb||Date.now()-db.lb>6048e5)?'<p style="color:var(--w)"><b>⚠ پشتیبان‌گیری انجام نشده یا بیش از ۷ روز گذشته است (تنظیمات ← پشتیبان‌گیری)</b></p>':''}${PCT()>70?'<p style="color:var(--e)"><b>⚠ حافظه‌ی برنامه بیش از ۷۰٪ پر است؛ حتماً پشتیبان بگیرید.</b></p>':''}${ordPendingHtml()}${lw.length+dc.length+(db.o||[]).filter(o=>!o.done).length?'':'<p class="m">اعلانی نیست</p>'}</div>`;$('#md').style.display='flex'}
 function sh(){camOff();const b=$('#sbar');b.style.display=b.style.display=='none'?'flex':'none';b.style.display=='flex'&&$('#q').focus()}
 function tg(k,on){db.ap=on?[...new Set([...db.ap,k])]:db.ap.filter(x=>x!=k);save()}
 function toast(t){let d=document.getElementById('toastx');if(!d){d=document.createElement('div');d.id='toastx';d.style.cssText='position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:12px 22px;border-radius:14px;z-index:999;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center';document.body.appendChild(d)}d.textContent=t;d.style.opacity=1;clearTimeout(d._t);d._t=setTimeout(()=>d.style.opacity=0,2600)}
@@ -436,7 +517,7 @@ function catRen(i){const c=cats()[i];form('تغییر نام دسته',[{k:'n',l
 function catDel(i){const c=cats()[i];ask('دسته‌ی «'+esc(c)+'» حذف شود؟ محصولات آن «بدون دسته» می‌شوند.',()=>{db.g.concat(db.s).forEach(x=>{if((x.cat||'').trim()==c)x.cat=''});if(st.pc==c)st.pc='';save();render();setTimeout(catMgr,50)})}
 function about(){camOff();const m=$('#md');m.className='md';m.innerHTML=`<div class="mb"><div class="row"><b>درباره ما</b><span class="ib" onclick="mc()">✕</span></div><img class="logo" src="${document.querySelector('.logo').src}" style="height:64px;display:block;margin:12px auto"><p style="line-height:2.1;text-align:justify;margin:8px 0">کافی نت و تحریر ترافیک در سال ۱۴۰۲ به منظور تسریع در خدمت رسانی و تسهیل خدمات به عموم مردم به ویژه دانشجویان و دانش آموزان احداث گردید که با ورود مدیریت قدرتمند جناب امیرحسین جعفری به بهبود و افزایش نقاط قوت و پیشرفت چشمگیر آن افزوده گردید یکی دیگر از این خدمات چشمگیر ساخت و پردازش این نرم افزار ویژه می باشد.</p></div>`;m.style.display='flex'}
 const rid=()=>Math.random().toString(36).slice(2,6);
-const COLS=['g','s','c','i','pf','b','x','p'],KVK=['us','ap','units','hd','imp','pw','ab'],NEWEST=['i','pf','b','x'],SKV=K+'_sv',SKM=K+'_sm',SKQ=K+'_q';
+const COLS=['g','s','c','i','pf','b','x','p','o'],KVK=['us','ap','units','hd','imp','pw','ab'],NEWEST=['i','pf','b','x','o'],SKV=K+'_sv',SKM=K+'_sm',SKQ=K+'_q';
 let SV=null,SVQ=[],LAST={kv:{}},VER={},SQ=0,SEP='',SAP=0,SHOLD=0,SVOK=false,SVT=0,SCF=0,SVN=0,KT,SCH=Promise.resolve();
 const NOQ=(r,f)=>{if(SV){r.no=0;r.nw=1}else r.no=db[f]++},rawSave=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(e){}};
 function svCfg(){try{SV=JSON.parse(localStorage.getItem(SKV)||'null');if(SV){SVQ=JSON.parse(localStorage.getItem(SKQ)||'[]');const m=JSON.parse(localStorage.getItem(SKM)||'null');if(m){SQ=m.seq||0;SEP=m.ep||'';VER=m.ver||{}}}}catch(e){SV=null}}
@@ -469,12 +550,45 @@ function svOp(o){const c=o.col,A=db[c];
  else if(o.k=='del'){const ix=A.findIndex(x=>x.id==o.id);if(ix>=0)A.splice(ix,1);LAST[c].delete(o.id);delete VER[c+':'+o.id]}
  else if(o.k=='inc'){const e=A.find(x=>x.id==o.id);if(e){e.st=(+e.st||0)+(+o.d.by||0);LAST[c].set(o.id,JSON.stringify(e))}}
  else if(o.k=='kv'){db[o.id]=o.d;LAST.kv[o.id]=JSON.stringify(o.d);if(o.id=='us'&&CU)CU=db.us.find(x=>x.id==CU.id)||CU}}
-async function poll0(){if(!SV||SHOLD)return;try{const r=await svf('/api/ops?since='+SQ);if(r.epoch!==SEP||r.reset){await load0();SVOK=true;svUI();return}
+async function poll0(){if(!SV||SHOLD)return;try{const r=await svf('/api/ops?since='+SQ);if(r.epoch!==SEP){await load0();SVOK=true;svUI();return}
+    if(r.reset){await merge0();SVOK=true;svUI();return}
  if(r.ops.length){SAP=1;try{r.ops.forEach(svOp)}finally{SAP=0}rawSave()}
  SQ=r.seq;if(r.ctr){db.no=r.ctr.no;db.np=r.ctr.np}SVOK=true;svMeta();if(r.ops.length)svRefresh();svUI()}catch(e){SVOK=false;if(e.status==401)svOut(true);svUI()}}
 async function load0(){const r=await svf('/api/state');SAP=1;try{VER={};for(const c of COLS){const E=r.ents[c]||[],a=E.map(e=>e.d);db[c]=NEWEST.includes(c)?a.reverse():a;E.forEach(e=>VER[c+':'+e.id]=e.ver)}
  for(const k of KVK)if(r.kv[k])db[k]=r.kv[k].d;db.no=r.ctr.no;db.np=r.ctr.np;SEP=r.epoch;SQ=r.seq;SVQ=[];svBuildLast()}finally{SAP=0}
  rawSave();svMeta();hdi();if(CU)CU=db.us.find(x=>x.id==CU.id)||db.us.find(x=>x.r=='m');svRefresh(1)}
+
+// ادغام: هیچ‌کدام از دو طرف پاک نمی‌شود. رکوردها بر اساس id یکی می‌شوند.
+// تغییرات این دستگاه که سرور ندارد (از جمله تغییرات آفلاین) به صف ارسال می‌شود.
+async function merge0(){
+  const r=await svf('/api/state');
+  SAP=1;
+  try{
+    VER={};
+    for(const c of COLS){
+      const E=r.ents[c]||[], cur=db[c]||(db[c]=[]);
+      const have=new Set(cur.map(x=>x&&x.id));
+      E.forEach(e=>{VER[c+':'+e.id]=e.ver; if(!have.has(e.id)) cur.push(e.d)});
+      if(NEWEST.includes(c)) cur.sort((a,b)=>(b.t||0)-(a.t||0));
+    }
+    for(const k of KVK){
+      const sk=r.kv[k]; if(!sk) continue;
+      if(db[k]==null) db[k]=sk.d;
+      else if(Array.isArray(db[k])&&Array.isArray(sk.d)){
+        const ids=new Set(db[k].map(x=>x&&x.id));
+        sk.d.forEach(x=>{if(x&&!ids.has(x.id)) db[k].push(x)});
+      }
+    }
+    db.no=Math.max(db.no||0,r.ctr.no); db.np=Math.max(db.np||0,r.ctr.np);
+    SEP=r.epoch; SQ=r.seq;
+    LAST={kv:{}};
+    for(const c of COLS) LAST[c]=new Map((r.ents[c]||[]).map(e=>[e.id,JSON.stringify(e.d)]));
+    for(const k of KVK) if(r.kv[k]) LAST.kv[k]=JSON.stringify(r.kv[k].d);
+    SVQ=[];
+  }finally{SAP=0}
+  rawSave(); svMeta();
+  svEnq();
+}
 function svStart(){clearInterval(SVT);SVT=setInterval(()=>{svFlush();svPoll()},2000);svFlush();svPoll()}
 function svOut(auto){clearInterval(SVT);SVT=0;SV=null;SVQ=[];SHOLD=0;[SKV,SKM,SKQ].forEach(k=>localStorage.removeItem(k));if(auto)alert('این دستگاه از سرور حذف شده یا مجوزش معتبر نیست؛ اتصال قطع شد. اطلاعات همین دستگاه سر جایش است.');try{render()}catch(e){}}
 async function svReplace(){if(!SV)return;if(!confirm('این پشتیبان روی سرور هم جایگزین شود؟ همه‌ی دستگاه‌های دیگر هم همین اطلاعات را می‌گیرند.\n(اگر «لغو» بزنید، این دستگاه از سرور جدا می‌شود.)')){svOut();return}
@@ -488,8 +602,8 @@ function svForm(){const web=!NAT()&&/^https?:/.test(location.protocol);form('ا�
  try{const s=await svf('/api/state'),has=Object.values(s.ents).some(a=>a.length);
   if(!has){if(!confirm('سرور هنوز خالی است. اطلاعات همین دستگاه ('+csum(cnt(db))+') روی سرور بارگذاری شود؟')){svOut();return 'لغو شد'}await svf('/api/import',{method:'POST',body:JSON.stringify({db:JSON.parse(bkJson()).db})})}
   else{const e=s.ents,m={i:e.i.length,inv:e.i.filter(x=>x.d.no).length,pf:e.pf.length,g:e.g.length,s:e.s.length,c:e.c.length,b:e.b.length,x:e.x.length,p:e.p.length,u:s.kv.us?s.kv.us.d.length:0};
-   if(!confirm('سرور اطلاعات دارد:\n'+csum(m)+'\n\nاطلاعات این دستگاه با اطلاعات سرور جایگزین می‌شود. ادامه می‌دهید؟')){svOut();return 'لغو شد'}try{localStorage.setItem(K+'_prev',localStorage.getItem(K)||'')}catch(x){}}
-  await load0();db.bn=Math.max(db.bn||0,Math.floor(Math.random()*9e7));rawSave()}catch(e){svOut();return 'همگام‌سازی اولیه ناموفق بود: '+(e.message||e)}
+   if(!confirm('سرور اطلاعات دارد:\n'+csum(m)+'\n\nاطلاعات این دستگاه و سرور با هم ادغام می‌شوند و هیچ‌کدام پاک نمی‌شود. ادامه می‌دهید؟')){svOut();return 'لغو شد'}try{localStorage.setItem(K+'_prev',localStorage.getItem(K)||'')}catch(x){}}
+  await merge0();db.bn=Math.max(db.bn||0,Math.floor(Math.random()*9e7));rawSave()}catch(e){svOut();return 'همگام‌سازی اولیه ناموفق بود: '+(e.message||e)}
  svStart();alert('به سرور وصل شد.');render()})}
 let SK=0,ABT,ABR=0;
 function abSched(){if(!db||!db.ab||!NAT())return;clearTimeout(ABT);ABT=setTimeout(()=>abRun(0),2000)}
