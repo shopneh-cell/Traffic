@@ -176,7 +176,73 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
 .lrow small{color:var(--m)}
 .lrow b{color:var(--t)}
 .bgthumb{width:100%;display:block;border-radius:6px;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/16px 16px}
-@media (max-width:700px){body{display:block!important;overflow:auto!important;height:auto!important}.side{width:auto!important;flex-direction:row!important;flex-wrap:nowrap;overflow-x:auto;padding:8px 10px!important;gap:6px;align-items:center;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px rgba(20,40,90,.2)}.side h1{display:none!important}.side .tab{flex:none;white-space:nowrap;padding:9px 12px!important}.main{display:block!important;min-width:0;width:100%}.top{flex-wrap:wrap}}
+@media (max-width:700px){
+  html,body{max-width:100%;overflow-x:hidden}
+  body{display:block!important;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;background:var(--bg)}
+  /* ---- نوار پایین: بخش‌های اصلی ---- */
+  .side{position:fixed!important;left:0;right:0;bottom:0;top:auto;width:auto!important;max-width:100%;height:auto;
+    flex-direction:row!important;flex-wrap:nowrap!important;justify-content:space-around;align-items:stretch;gap:2px!important;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))!important;overflow:visible!important;z-index:40;
+    box-shadow:0 -4px 16px rgba(10,20,50,.25);border-radius:18px 18px 0 0}
+  .side h1,.side img,.side small,.side > div:not(.subnav),.side .navbtn small,.side .tab small{display:none!important}
+  .side .navbtn,.side > .tab{flex:1 1 0;min-width:0;height:auto!important;margin:0!important;width:auto!important;
+    flex-direction:column!important;align-items:center!important;justify-content:center;gap:2px;padding:6px 2px!important;
+    border-radius:14px!important;text-align:center}
+  .side .navbtn .ti,.side > .tab .ti{width:28px!important;height:28px!important;flex:none}
+  .side .navbtn .ti svg,.side > .tab .ti svg{width:20px!important;height:20px!important}
+  .side .navbtn .tt,.side > .tab .tt{display:block!important;font-size:11px!important;line-height:1.2;text-align:center}
+  .side .navbtn.open,.side > .tab.on{background:var(--p)!important;color:var(--bt)!important}
+  /* ---- زیرابزارها: کادر دکمه‌ای بالای نوار پایین ---- */
+  .subnav{position:fixed!important;left:8px;right:8px;bottom:calc(78px + env(safe-area-inset-bottom,0px));display:none;
+    flex-direction:row!important;flex-wrap:wrap!important;gap:8px!important;margin:0!important;padding:10px!important;
+    border:1px solid var(--l)!important;background:var(--c);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:45}
+  .subnav.open{display:flex!important}
+  .subnav .tab{flex:1 1 calc(50% - 8px);padding:14px 10px!important;text-align:center;font-size:15px!important;
+    background:var(--c2);color:var(--t)!important;border:1px solid var(--l);border-radius:14px}
+  .subnav .tab.on{background:var(--p);color:var(--bt)!important}
+  /* ---- نوار بالا: بازگشت و روز/شب ---- */
+  .side #backLink{color:var(--p)!important;opacity:1!important}
+  #backLink{position:fixed!important;top:8px;right:8px;z-index:50;background:var(--c);color:var(--p);
+    border:1px solid var(--l);border-radius:12px;padding:8px 10px;font-size:13px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .side #mode-btn{position:fixed!important;top:8px;left:8px;z-index:50;width:38px!important;height:38px!important;margin:0!important}
+  /* ---- محتوا: تمام‌عرض، ستونی، بدون عرض ثابت ---- */
+  .main{display:block!important;min-width:0;width:100%;max-width:100%;box-sizing:border-box;padding:56px 8px 150px}
+  .sec{flex-direction:column!important;flex-wrap:nowrap!important;grid-template-columns:1fr!important;min-width:0;max-width:100%;box-sizing:border-box}
+  .sec .panel,.sec .ivform,.sec .ivprev,.sec .field,.sec h3,.sec h4{width:auto!important;max-width:100%!important;min-width:0!important;
+    box-sizing:border-box!important;margin-left:0!important;margin-right:0!important}
+  .sec .field{flex-wrap:wrap;gap:6px}
+  .sec .field input,.sec .field select{width:auto!important;flex:1 1 110px;min-width:0;max-width:100%;height:44px}
+  .sec .panel{overflow:auto}
+  .top{flex-wrap:wrap!important;gap:8px;max-width:100%;box-sizing:border-box;padding:10px 8px}
+  .top .btn,.top button{max-width:100%;min-height:44px}
+  .btn{min-height:44px}
+  /* هر کانتینر داخل بخش‌ها: خطِ جدید برای هر آیتم، بدون بیرون زدن از کادر */
+  .sec div{flex-wrap:wrap!important;justify-content:flex-start!important;min-width:0}
+  .sec div > .panel,.sec div > .ivform,.sec div > .ivprev,.sec div > div{flex:1 1 100%!important;max-width:100%!important;min-width:0!important;width:auto!important}
+  .sec .hint{display:block!important;width:auto!important;white-space:normal;text-align:right}
+  .sec .top{justify-content:flex-start!important}
+  .sec div{grid-template-columns:minmax(0,1fr)!important}
+  #ivForm,.ivwork,.lay,#lList,.cw{width:auto!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+  /* بخش‌های کار (ابزار + پیش‌نمایش): ستونی، پیش‌نمایش تمام‌عرض */
+  .work{flex-direction:column!important;align-items:stretch!important;width:100%!important;max-width:100%!important;margin:0!important;left:auto!important;right:auto!important}
+  .stage{flex-direction:column!important;width:100%!important;max-width:100%!important;margin:0!important;left:auto!important;right:auto!important;min-width:0!important}
+  .cw{position:static!important;left:auto!important;right:auto!important;margin:0!important;transform:none!important;min-height:260px;justify-content:center}
+  .cw canvas{max-width:100%!important}
+  .info,#lInfo,.hint,#bgHint{position:static!important;left:auto!important;right:auto!important;transform:none!important;width:100%!important;max-width:100%!important;margin:0 0 8px!important;box-sizing:border-box!important}
+  .lay,.panel{position:static!important;left:auto!important;right:auto!important;transform:none!important}
+  .prev,.prev *{max-width:100%!important;box-sizing:border-box}
+  .sec .prev,.sec .stage,.sec .work,.sec .lay,.sec .panel,.sec .ivwork,.sec #ivForm,.sec .ivform{flex-wrap:nowrap!important}
+  .sec .prev,.sec .stage,.sec .work{flex-direction:column!important}
+  .prev{overflow-x:hidden!important;align-items:stretch!important}
+  .prev canvas{width:auto!important;height:auto!important}
+}
+
+.rtcv{display:block;margin:0 auto;max-width:100%;touch-action:none;border-radius:12px;background:#222;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.rtbox{text-align:center}
+.rtacts{justify-content:center}
+.rtsteps{margin:6px 10px;font-size:13px;color:var(--m)}.rtsteps summary{cursor:pointer;font-weight:700;color:var(--p)}.rtsteps li{margin:4px 0;line-height:1.7}
+.rtctl label{display:block;margin:10px 0;font-size:14px}
+.rtctl input[type=range]{width:100%;height:auto;padding:0;accent-color:var(--p);margin-top:6px}
 </style>
 </head>
 <body>
@@ -194,6 +260,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     <button class="tab" data-tab="scan">🪄 سفیدکننده</button>
     <button class="tab" data-tab="layout">🧩 عکس‌چین</button>
     <button class="tab" data-tab="bg">✂ حذف پس‌زمینه</button>
+    <button class="tab" data-tab="retouch">✨ روتوشر</button>
   </div>
 
   <button class="tab" data-tab="invoice"><span class="ti" data-icon="invoice"></span><span class="tt">فاکتور ساز<small>خودسازی · دیگرسازی</small></span></button>
@@ -299,6 +366,56 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     <div class="status" id="lStatus">آماده</div>
   </section>
 
+  <!-- روتوشر: عکس پرسنلی -->
+  <section id="tab-retouch" class="sec" style="display:none">
+    <div class="top">
+      <button class="btn" id="rtPick">🖼 از گالری</button>
+      <button class="btn out" id="rtCam">📷 گرفتن عکس</button>
+      <input type="file" id="rtIn" accept="image/*" hidden>
+      <input type="file" id="rtCamIn" accept="image/*" capture="user" hidden>
+    </div>
+    <div class="top">
+      <button class="chip rt-size on" data-size="34">۳×۴ سانتی‌متر</button>
+      <button class="chip rt-size" data-size="46">۴×۶ سانتی‌متر</button>
+    </div>
+    <div class="top">
+      <button class="chip rt-pf" data-pf="natural">طبیعی</button>
+      <button class="chip rt-pf" data-pf="fresh">شاداب</button>
+      <button class="chip rt-pf" data-pf="pro">پرسنلی حرفه‌ای</button>
+    </div>
+    <details class="rtsteps"><summary>مراحل روتوش</summary>
+      <ul>
+        <li><b>پوست:</b> تراز سفیدی، کاهش براقی و قرمزی، نرم‌سازی فقط روی پوست</li>
+        <li><b>چهره:</b> روشن‌کردن زیر چشم، سفیدی چشم و دندان (با نقاط کلیدی چهره)</li>
+        <li><b>نور و رنگ:</b> کنتراست کنترل‌شده، روشنایی خودکار برای عکس تیره</li>
+        <li><b>تصویر:</b> وضوح ملایم، کادر دقیق ۳×۴ یا ۴×۶ و خروجی ۳۰۰ dpi</li>
+      </ul>
+    </details>
+    <div class="panel rtbox">
+      <canvas id="rtCv" class="rtcv"></canvas>
+      <p class="hint" id="rtStatus"></p>
+    </div>
+    <div class="top rtacts">
+      <button class="btn" id="rtAuto" disabled>✨ روتوش هوشمند خودکار</button>
+      <button class="btn" id="rtSave" disabled>💾 ذخیره‌ی عکس</button>
+    </div>
+    <div class="top rtacts">
+      <button class="btn out" id="rtCompare" disabled>👁 نمایش قبل / بعد</button>
+      <button class="btn out" id="rtReset" disabled>↺ بازنشانی</button>
+    </div>
+    <div class="panel rtctl">
+      <label>روشنایی <input type="range" id="rtBright" min="-50" max="50" value="0"></label>
+      <label>کنتراست <input type="range" id="rtContrast" min="-50" max="70" value="0"></label>
+      <label>اشباع رنگ <input type="range" id="rtSatur" min="-50" max="70" value="0"></label>
+      <label>گرمی رنگ <input type="range" id="rtWarm" min="-40" max="40" value="0"></label>
+      <label>نرمی پوست <input type="range" id="rtSmooth" min="0" max="10" value="0"></label>
+      <label>شارپنس (وضوح) <input type="range" id="rtSharp" min="0" max="100" value="0"></label>
+      <label>کاهش نویز <input type="range" id="rtNoise" min="0" max="50" value="0"></label>
+      <label>زوم <input type="range" id="rtZoom" min="1" max="3" step="0.05" value="1"></label>
+    </div>
+    <div id="rtOut"></div>
+  </section>
+
   <!-- حذف پس‌زمینه -->
   <section id="tab-bg" class="sec" style="display:none">
     <div class="top">
@@ -349,5 +466,6 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
 <script src="sites.js"></script>
 <script src="keys.js"></script>
 <script>if(!window.desk){var bl=document.getElementById("backLink");if(bl)bl.style.display="block"}</script>
+<script src="retouch.js"></script>
 </body>
 </html>

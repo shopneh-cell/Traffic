@@ -13,7 +13,7 @@
   document.querySelectorAll('.tab').forEach(function (b) {
     b.onclick = function () {
       document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x === b); });
-      ['forms', 'contracts', 'scan', 'layout', 'bg', 'invoice', 'sites'].forEach(function (k) {
+      ['forms', 'contracts', 'scan', 'layout', 'bg', 'retouch', 'invoice', 'sites'].forEach(function (k) {
         $('tab-' + k).style.display = b.dataset.tab === k ? 'flex' : 'none';
       });
     };
