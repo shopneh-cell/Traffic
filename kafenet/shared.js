@@ -89,6 +89,14 @@
   window.knSitesSave = function (list) { localStorage.setItem('kn_sites', JSON.stringify(list)); if (window.sitesRefresh) window.sitesRefresh(); };
   window.knSiteOpen = function (url) {
     var u = String(url || '').trim(); if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    // اندروید: مرورگر داخلی برنامه (Capacitor Browser)؛ بدون رفتن به مرورگر بیرونی
+    var C = window.Capacitor;
+    if (C && C.Plugins && C.Plugins.Browser) {
+      C.Plugins.Browser.open({ url: u }).catch(function () { window.open(u, '_blank'); });
+      return;
+    }
+    // ویندوز: پنجره‌ی داخلی برنامه
+    if (window.desk && window.desk.openSite) { window.desk.openSite(u); return; }
     window.open(u, '_blank');
   };
 

@@ -243,6 +243,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
 .rtsteps{margin:6px 10px;font-size:13px;color:var(--m)}.rtsteps summary{cursor:pointer;font-weight:700;color:var(--p)}.rtsteps li{margin:4px 0;line-height:1.7}
 .rtctl label{display:block;margin:10px 0;font-size:14px}
 .rtctl input[type=range]{width:100%;height:auto;padding:0;accent-color:var(--p);margin-top:6px}
+.askov{overflow-y:auto;align-items:flex-start;padding:24px 10px;-webkit-overflow-scrolling:touch}.askbox{margin:auto;max-height:none;max-width:100%}.dsrow{flex-wrap:wrap}.dsrow input.askin{min-width:0}
 </style>
 </head>
 <body>
@@ -383,6 +384,9 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
       <button class="chip rt-pf" data-pf="fresh">شاداب</button>
       <button class="chip rt-pf" data-pf="pro">پرسنلی حرفه‌ای</button>
     </div>
+    <div class="top">
+      <button class="chip rt-bgw on" id="rtBgW">زمینه‌ی سفید خودکار</button>
+    </div>
     <details class="rtsteps"><summary>مراحل روتوش</summary>
       <ul>
         <li><b>پوست:</b> تراز سفیدی، کاهش براقی و قرمزی، نرم‌سازی فقط روی پوست</li>
@@ -446,7 +450,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
   </section>
 
   <!-- ثبت‌نام یار -->
-  <section id="tab-sites" class="sec" style="display:none"><div class="top"><span style="font-weight:700;font-size:17px;color:var(--p)">ثبت‌نام یار</span><span style="flex:1"></span><button class="btn out" id="siteManage">⚙ مدیریت سایت‌ها</button></div><div class="fwork" style="grid-template-columns:1fr"><div class="fgrid" id="siteGrid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))"></div></div><div class="status">برای باز کردن سایت روی کارت آن بزنید (در مرورگر پیش‌فرض باز می‌شود).</div></section>
+  <section id="tab-sites" class="sec" style="display:none"><div class="top"><span style="font-weight:700;font-size:17px;color:var(--p)">ثبت‌نام یار</span><span style="flex:1"></span><button class="btn out" id="siteManage">⚙ مدیریت سایت‌ها</button></div><div class="fwork" style="grid-template-columns:1fr"><div class="fgrid" id="siteGrid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))"></div></div><div class="status">برای باز کردن سایت روی کارت آن بزنید (داخل برنامه باز می‌شود).</div></section>
   <!-- فاکتور ساز -->
   <section id="tab-invoice" class="sec" style="display:none"><div class="top"><button class="chip on" id="ivMode-self">خودسازی (از کالاهای خودم)</button><button class="chip" id="ivMode-free">دیگرسازی (فاکتور دلخواه)</button><span class="sep"></span><span id="ivTpls"></span><span style="flex:1"></span><button class="btn out" id="ivUndo">↶ برگشت</button><button class="btn out" id="ivHist">📚 فاکتورهای ذخیره‌شده</button><button class="btn out" id="ivNew">＋ فاکتور جدید</button><button class="btn" id="ivSave">💾 ذخیره</button><button class="btn" id="ivPrint">🖨 پرینت</button></div><div class="ivwork"><div class="ivform" id="ivForm"></div><div class="ivprev"><div class="ivpaper" id="ivPaper"></div></div></div><div class="status" id="ivStatus">آماده</div></section>
 </main>

@@ -20,7 +20,7 @@
   var R = {
     img: null, size: '34', zoom: 1, ox: 0, oy: 0,
     bright: 0, contrast: 0, smooth: 0, sat: 0, warm: 0, sharp: 0, noise: 0,
-    profile: null, kp: null, steps: [], showOriginal: false
+    profile: null, kp: null, steps: [], showOriginal: false, whiteBg: true, mask: null
   };
   var drag = null;
 
@@ -203,6 +203,100 @@
     return steps;
   }
 
+
+  // ---- حذف زمینه: ماسک شخص ----
+  // روش اصلی: MediaPipe Image Segmenter (selfie_segmenter). اگر مدل نباشد، الگوریتم پشتیبان روی رنگ زمینه.
+  function classicalMask(img) {
+    var MAXW = 360, sc = Math.min(1, MAXW / img.width);
+    var w = Math.max(8, Math.round(img.width * sc)), h = Math.max(8, Math.round(img.height * sc));
+    var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    var x = cv.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+    var d = x.getImageData(0, 0, w, h).data, N = w * h;
+    // رنگ زمینه: میانه‌ی پیکسل‌های لبه‌ی بالا و کناره‌ها
+    var rs = [], gs = [], bs = [], bw = Math.max(1, Math.round(h * 0.04)), px;
+    for (var y = 0; y < h; y++) for (var xx = 0; xx < w; xx++) {
+      if (y < bw || xx < bw || xx >= w - bw) { px = (y * w + xx) * 4; rs.push(d[px]); gs.push(d[px + 1]); bs.push(d[px + 2]); }
+    }
+    function med(a) { a.sort(function (p, q) { return p - q; }); return a[a.length >> 1]; }
+    var br = med(rs), bg = med(gs), bb = med(bs);
+    var bgLum = 0.299 * br + 0.587 * bg + 0.114 * bb;
+    // پیکسل زمینه: نزدیک به رنگ زمینه (با تحمل روشنایی برای سایه‌ی ملایم)
+    var isBg = new Uint8Array(N);
+    for (var i = 0; i < N; i++) {
+      var q = i * 4, dr = d[q] - br, dg = d[q + 1] - bg, db2 = d[q + 2] - bb;
+      var dist = Math.sqrt(dr * dr + dg * dg + db2 * db2);
+      var lum = 0.299 * d[q] + 0.587 * d[q + 1] + 0.114 * d[q + 2];
+      if (dist < 42 && Math.abs(lum - bgLum) < 60) isBg[i] = 1;
+    }
+    // فقط زمینه‌ای که به لبه‌ها وصل است زمینه حساب می‌شود (رنگ‌های داخل تصویر دست‌نخورده می‌مانند)
+    var bgReach = new Uint8Array(N), queue = [];
+    for (var yy = 0; yy < h; yy++) for (var x2 = 0; x2 < w; x2++) {
+      if ((yy === 0 || yy === h - 1 || x2 === 0 || x2 === w - 1)) { var id = yy * w + x2; if (isBg[id] && !bgReach[id]) { bgReach[id] = 1; queue.push(id); } }
+    }
+    for (var qi = 0; qi < queue.length; qi++) {
+      var c = queue[qi], cy = (c / w) | 0, cx = c - cy * w, nb = [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]];
+      for (var k = 0; k < 4; k++) { var nx = nb[k][0], ny = nb[k][1]; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue; var nid = ny * w + nx; if (isBg[nid] && !bgReach[nid]) { bgReach[nid] = 1; queue.push(nid); } }
+    }
+    // ماسک شخص (۱ = شخص، ۰ = زمینه) با کمی نرم‌کردن لبه
+    var m = new Float32Array(N); for (var j = 0; j < N; j++) m[j] = bgReach[j] ? 0 : 1;
+    m = boxBlur(m, w, h, 2);
+    return { data: m, w: w, h: h, src: 'classic' };
+  }
+
+  var segPromise = null;
+  function loadSegmenter() {
+    if (segPromise) return segPromise;
+    segPromise = (async function () {
+      var base = new URL('../mediapipe/', location.href);
+      var mod = await import(new URL('vision_bundle.mjs', base).href);
+      var vision = await mod.FilesetResolver.forVisionTasks(new URL('wasm', base).href);
+      return await mod.ImageSegmenter.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: new URL('selfie_segmenter.tflite', base).href },
+        runningMode: 'IMAGE', outputCategoryMask: false, outputConfidenceMasks: true
+      });
+    })();
+    segPromise.catch(function () { segPromise = null; });
+    return segPromise;
+  }
+
+  // ماسک را بساز (اول الگوریتم پشتیبان؛ اگر MediaPipe آماده شد، ماسک دقیق‌تر جایگزین می‌شود)
+  function ensureMask() {
+    if (!R.img) return;
+    if (!R.mask || R.mask.src === 'classic') R.mask = classicalMask(R.img);
+    if (R.mask.src === 'mp') return Promise.resolve(R.mask);
+    return loadSegmenter().then(function (seg) {
+      var res = seg.segment(R.img);
+      var cm = res.confidenceMasks || [];
+      var mk = cm.length >= 2 ? cm[1] : cm[0];
+      if (!mk) return R.mask;
+      var arr = mk.getAsFloat32Array(), mw = mk.width, mh = mk.height;
+      var out = new Float32Array(arr.length);
+      for (var i = 0; i < arr.length; i++) out[i] = cm.length >= 2 ? arr[i] : 1 - arr[i];
+      R.mask = { data: out, w: mw, h: mh, src: 'mp' };
+      if (mk.close) mk.close(); res.close && res.close();
+      return R.mask;
+    }).catch(function () { return R.mask; });
+  }
+
+  // اعمال زمینه‌ی سفید: پیکسل‌های زمینه سفید می‌شوند، لبه‌ها نرم می‌مانند
+  function applyWhiteBg(a, w, h, g, k) {
+    if (!R.mask) return;
+    var M = R.mask, iw = R.img.width, ih = R.img.height;
+    for (var y = 0; y < h; y++) {
+      var sy = (y / k - g.y0) / g.s, v = sy / ih;
+      for (var x = 0; x < w; x++) {
+        var sx = (x / k - g.x0) / g.s, u = sx / iw, p;
+        var mx = Math.floor(u * M.w), my = Math.floor(v * M.h), pm;
+        if (mx < 0 || my < 0 || mx >= M.w || my >= M.h) pm = 0;
+        else pm = M.data[my * M.w + mx];
+        var q = (y * w + x) * 4;
+        a[q] = a[q] * pm + 255 * (1 - pm);
+        a[q + 1] = a[q + 1] * pm + 255 * (1 - pm);
+        a[q + 2] = a[q + 2] * pm + 255 * (1 - pm);
+      }
+    }
+  }
+
   // رندر کادر در ابعاد دلخواه. forSave=false اگر نمایش قبل/بعد فعال باشد، نسخه‌ی اصلی برمی‌گردد.
   function render(w, h, forSave) {
     var c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -214,6 +308,7 @@
     var im = x.getImageData(0, 0, w, h), N = w * h;
     toneAdjust(im.data, N);
     if (R.noise > 0) denoise(im.data, w, h);
+    if (R.whiteBg && R.mask) applyWhiteBg(im.data, w, h, g, k);
     var T = { face: null, eyes: null, mouth: null, d: 0 };
     if (R.kp && R.kp.length >= 2) {
       var iw = R.img.width, ih = R.img.height;
@@ -317,6 +412,7 @@
     status('در حال تشخیص چهره ...');
     var profileKey = R.profile || 'natural';
     R.showOriginal = false;
+    R.whiteBg = true;
     var finish = function (msg) {
       applyProfile(profileKey);
       R.sat = AUTO_PRESET.sat; R.warm = AUTO_PRESET.warm; R.sharp = AUTO_PRESET.sharp; R.noise = AUTO_PRESET.noise;
@@ -347,7 +443,7 @@
       R.img = im; R.zoom = 1; R.ox = 0; R.oy = 0; R.kp = null;
       R.bright = 0; R.contrast = 0; R.smooth = 0; R.sat = 0; R.warm = 0; R.sharp = 0; R.noise = 0;
       R.profile = null; R.steps = []; R.showOriginal = false;
-      syncSliders(); drawPreview(); setButtons(true);
+      R.mask = null; syncSliders(); drawPreview(); setButtons(true); ensureMask().then(function () { drawPreview(); });
       $r('rtAuto').disabled = false; $r('rtSave').disabled = false;
       status('عکس آماده است. «روتوش هوشمند خودکار» را بزن یا تنظیمات را دستی تغییر بده.');
     };
@@ -373,6 +469,26 @@
     drawPreview();
   }
 
+
+  // اندروید: فایل در Documents/Traffic ذخیره می‌شود و برگه‌ی ذخیره/ارسال باز می‌شود (گالری)
+  function saveNative(blob, name) {
+    var P = window.Capacitor.Plugins, FS = P.Filesystem, SH = P.Share;
+    var rd = new FileReader();
+    rd.onload = async function () {
+      try {
+        var b64 = String(rd.result).split(',')[1];
+        var r = await FS.writeFile({ path: 'Traffic/' + name, data: b64, directory: 'DOCUMENTS', recursive: true });
+        status('فایل ذخیره شد (Documents/Traffic/' + name + ').');
+        if (SH && SH.share) await SH.share({ title: name, text: 'عکس روتوش‌شده', files: [r.uri], dialogTitle: 'ذخیره یا ارسال عکس' });
+      } catch (e) { status('ذخیره ناموفق بود: ' + (e && e.message ? e.message : e)); }
+    };
+    rd.readAsDataURL(blob);
+  }
+  function nativeFiles() {
+    var C = window.Capacitor;
+    return !!(C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.Filesystem);
+  }
+
   // ذخیره: همیشه نسخه‌ی پردازش‌شده (حتی اگر نمایش قبل فعال باشد)
   function save() {
     if (!R.img) return;
@@ -384,6 +500,12 @@
       if (window.desk && typeof downloadBlob === 'function') {
         downloadBlob(blob, name);
         status('فایل ذخیره شد: ' + name);
+      } else if (nativeFiles()) {
+        saveNative(blob, name);
+        var pv = URL.createObjectURL(blob), bx = $r('rtOut'); bx.innerHTML = '';
+        var im2 = document.createElement('img'); im2.src = pv; im2.alt = 'عکس روتوش‌شده';
+        im2.style.cssText = 'display:block;margin:8px auto;max-width:100%;border-radius:10px';
+        bx.appendChild(im2);
       } else {
         var url = URL.createObjectURL(blob);
         var box = $r('rtOut');
@@ -432,6 +554,7 @@
   $r('rtAuto').onclick = autoRetouch;
   $r('rtSave').onclick = save;
   $r('rtCompare').onclick = toggleCompare;
+  var bgb = $r('rtBgW'); if (bgb) bgb.onclick = function () { R.whiteBg = !R.whiteBg; bgb.classList.toggle('on', R.whiteBg); drawPreview(); status(R.whiteBg ? 'زمینه‌ی سفید فعال است.' : 'زمینه‌ی اصلی نمایش داده می‌شود.'); };
   $r('rtReset').onclick = resetAll;
 
   stage.style.touchAction = 'none';
