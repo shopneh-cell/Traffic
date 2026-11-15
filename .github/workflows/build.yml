@@ -31,6 +31,7 @@ jobs:
           cp node_modules/@mediapipe/tasks-vision/vision_bundle.mjs www/mediapipe/
           cp node_modules/@mediapipe/tasks-vision/wasm/* www/mediapipe/wasm/
           curl -fL -o www/mediapipe/blaze_face_short_range.tflite https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
+          curl -fL -o www/mediapipe/selfie_segmenter.tflite https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite || echo "هشدار: مدل بخش‌بندی دانلود نشد؛ زمینه با الگوریتم پشتیبان حذف می‌شود"
           ls -la www/mediapipe
       - run: npx cap add android
       - run: npx capacitor-assets generate --android
