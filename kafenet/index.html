@@ -244,6 +244,10 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
 .rtctl label{display:block;margin:10px 0;font-size:14px}
 .rtctl input[type=range]{width:100%;height:auto;padding:0;accent-color:var(--p);margin-top:6px}
 .askov{overflow-y:auto;align-items:flex-start;padding:24px 10px;-webkit-overflow-scrolling:touch}.askbox{margin:auto;max-height:none;max-width:100%}.dsrow{flex-wrap:wrap}.dsrow input.askin{min-width:0}
+.rtbox{height:auto!important;max-height:none!important;overflow:visible!important;padding-bottom:12px}
+.rtbox canvas#rtCv{display:block;margin:0 auto;position:relative}
+#tab-retouch > *{flex-shrink:0!important}
+#tab-retouch{overflow-y:auto!important}
 </style>
 </head>
 <body>
@@ -386,6 +390,10 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     </div>
     <div class="top">
       <button class="chip rt-bgw on" id="rtBgW">زمینه‌ی سفید خودکار</button>
+    </div>
+    <div class="top">
+      <button class="chip" id="rtSel">🟦 انتخاب چهره با مستطیل</button>
+      <button class="chip" id="rtSelClr">پاک‌کردن کادر</button>
     </div>
     <details class="rtsteps"><summary>مراحل روتوش</summary>
       <ul>

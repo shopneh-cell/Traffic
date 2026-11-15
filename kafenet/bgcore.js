@@ -308,14 +308,106 @@
 
   // ---------- API عمومی ----------
   // src: canvas کامل ; hints: Uint8Array روی تصویر کاری ; بازگشت: {result: ImageData(کامل), mask, W, H, hints}
+  
+  // ---------- پیش‌فرض پرتره: صورت، سر و بدنه ----------
+  // ۱) پیدا کردن صورت از بزرگ‌ترین ناحیه‌ی پوست در بالای عکس
+  // ۲) سر: بیضی بالای صورت (مو)؛ بدن: ذوزنقه‌ی زیر چانه تا لبه‌ی پایین
+  // در ذوزنقه‌ی بدن، پیراهن (حتی سفید) سوژه حساب می‌شود؛ در سر فقط پیکسل‌های غیر زمینه می‌مانند.
+  function skinMaskOf(d, W, H) {
+    var n = W * H, sk = new Uint8Array(n), i;
+    for (i = 0; i < n; i++) {
+      var q = i * 4, r = d[q], g = d[q + 1], b = d[q + 2];
+      var cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b, cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
+      if (cb >= 77 && cb <= 127 && cr >= 133 && cr <= 173 && (0.299 * r + 0.587 * g + 0.114 * b) > 45) sk[i] = 1;
+    }
+    return sk;
+  }
+  function findFace(sk, W, H) {
+    var n = W * H, lab = new Int32Array(n), best = null, id = 0, stack = new Int32Array(n), i;
+    for (i = 0; i < n; i++) {
+      if (!sk[i] || lab[i]) continue;
+      id++; var sp = 0, minX = W, maxX = 0, minY = H, maxY = 0, cnt = 0;
+      stack[sp++] = i; lab[i] = id;
+      while (sp) {
+        var c = stack[--sp], cx = c % W, cy = (c / W) | 0; cnt++;
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx; if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        var nb = [c - 1, c + 1, c - W, c + W];
+        for (var k = 0; k < 4; k++) {
+          var v = nb[k]; if (v < 0 || v >= n) continue;
+          var vx = v % W; if (Math.abs(vx - cx) > 1) continue;
+          if (sk[v] && !lab[v]) { lab[v] = id; stack[sp++] = v; }
+        }
+      }
+      // صورت: بزرگ، بالای نیمه‌ی عکس، و کشیده‌ی عمودی (نه دست و گردن پهن)
+      var h = maxY - minY + 1, w = maxX - minX + 1;
+      if (cnt < n * 0.004 || minY > H * 0.55) continue;
+      if (h < w * 0.9) continue;
+      var score = cnt;
+      if (!best || score > best.score) best = { score: score, x0: minX, x1: maxX, y0: minY, y1: maxY };
+    }
+    return best;
+  }
+  function portraitRegion(d, W, H) {
+    var sk = skinMaskOf(d, W, H), f = findFace(sk, W, H);
+    if (!f) return null;
+    var faceW = f.x1 - f.x0 + 1, faceH = f.y1 - f.y0 + 1;
+    var cx = (f.x0 + f.x1) / 2, chinY = Math.min(f.y1, f.y0 + 1.3 * faceW), headTop = Math.max(0, f.y0 - 0.45 * faceH);
+    var headCy = (headTop + chinY) / 2, headRy = (chinY - headTop) / 2 * 1.08, headRx = faceW * 0.72;
+    // شانه: از گردن (باریک) تا شانه‌ی کامل؛ بعد از آن تنه‌ی کامل
+    var yShoulder = chinY + 0.42 * faceH;
+    var n = W * H;
+    var inHead = new Uint8Array(n), inBody = new Uint8Array(n), inShoulder = new Uint8Array(n), inShoulderNarrow = new Uint8Array(n), y, x;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
+      var i = y * W + x;
+      var ex = (x - cx) / headRx, ey = (y - headCy) / headRy;
+      if (ex * ex + ey * ey <= 1) inHead[i] = 1;
+      if (y < chinY) continue;
+      if (y < yShoulder) {
+        var ts = (y - chinY) / Math.max(1, yShoulder - chinY);             // ۰ تا ۱ در ناحیه‌ی شانه
+        var hwS = faceW * (0.5 + 0.7 * Math.sqrt(ts));                      // گردن → شانه، منحنی
+        if (Math.abs(x - cx) <= hwS) inShoulder[i] = 1;
+        if (Math.abs(x - cx) <= hwS * 0.9) inShoulderNarrow[i] = 1;
+      } else {
+        var tb = (y - yShoulder) / Math.max(1, H - yShoulder);
+        var hwB = faceW * (1.2 + 0.1 * tb);                                  // تنه‌ی کامل
+        if (Math.abs(x - cx) <= hwB) inBody[i] = 1;
+      }
+    }
+    return { face: f, inHead: inHead, inBody: inBody, inShoulder: inShoulder, inShoulderNarrow: inShoulderNarrow };
+  }
+  // ماسک نهایی: بدن داخل ذوزنقه = سوژه؛ سر داخل بیضی = فقط اگر ماسک رنگی سوژه باشد؛ بقیه = زمینه
+  function applyPortrait(mask, d, W, H) {
+    var pr = portraitRegion(d, W, H);
+    if (!pr) return mask;
+    var out = new Uint8Array(W * H), i, q, r, g, bl, mx, mn, sat, lum, y;
+    for (i = 0; i < W * H; i++) {
+      y = (i / W) | 0;
+      q = i * 4; r = d[q]; g = d[q + 1]; bl = d[q + 2];
+      mx = Math.max(r, g, bl); mn = Math.min(r, g, bl);
+      sat = mx ? (mx - mn) / mx : 0; lum = 0.299 * r + 0.587 * g + 0.114 * bl;
+      // چوب تیره‌ی پشت‌زمینه: فقط ته‌ی عکس، خیلی تیره و خیلی اشباع (گردن و پوست را شامل نمی‌شود)
+      var wood = y > H * 0.86 && ((lum < 130 && sat > 0.4) || (lum < 170 && sat > 0.3 && r > g + 25));   // قهوه‌ای-قرمز تیره‌ی وسایل؛ پیراهن صورتی (روشن) مستثنی است
+      var xx = i % W; var corner = y > H * 0.8 && (xx < W * 0.12 || xx > W * 0.88) && sat > 0.25 && lum < 200 && r > g && g > bl;   // قهوه‌ای وسایل (قرمز>سبز>آبی)؛ پیراهن صورتی (قرمز>آبی>سبز) و آستین سفید مستثنی‌اند
+      // دیوار خیلی سفید (روشنایی بالای ۲۴۰ و کم‌اشباع) از شانه کنار می‌رود؛ پیراهن‌های رنگی و سفید معمولی سوژه‌اند
+      var shoulder = pr.inShoulder[i] && !(sat < 0.14 && lum > 240);
+      if ((pr.inBody[i] || shoulder) && !wood && !corner) out[i] = 1;   // تنه و شانه: سوژه
+      else if (pr.inHead[i] && mask[i]) out[i] = 1;          // سر و مو: فقط با تأیید رنگ
+      else out[i] = 0;
+    }
+    return out;
+  }
+
   window.BGCore = {
     WORK: WORK,
+    portrait: true,
     workSize: function (w, h) { var k = Math.min(1, WORK / Math.max(w, h)); return { W: Math.max(2, Math.round(w * k)), H: Math.max(2, Math.round(h * k)) }; },
     workCanvas: function (src, W, H) { var c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(src, 0, 0, W, H); return c; },
     segment: function (workCanvas, hints) {
       var W = workCanvas.width, H = workCanvas.height;
       var img = workCanvas.getContext('2d').getImageData(0, 0, W, H);
-      return segment(img, hints);
+      var res = segment(img, hints);
+      if (BGCore.portrait !== false) res.mask = applyPortrait(res.mask, img.data, W, H);
+      return res;
     },
     matte: function (full, mask, W, H, bg) { return matte(full, mask, W, H, bg); }
   };
