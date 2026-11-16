@@ -341,6 +341,14 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
             <select id="ppSize"><option value="3x4">۳ × ۴ سانتی‌متر</option><option value="4x6">۴ × ۶ سانتی‌متر</option></select></div>
           <div class="info">۶۰۰ dpi · کادر مشکی برای برش · هر عکس یک ردیف ۶تایی در A4 · بقیه‌ی صفحه خالی</div>
         </div>
+        <div id="lAutoBox" style="background:var(--c2);border:1px solid var(--l);border-radius:12px;padding:10px;margin-bottom:14px">
+          <h3 style="margin:0 0 6px">🧠 چیدن هوشمند</h3>
+          <div class="field"><span>فعال باشد</span><input type="checkbox" id="lAutoOn"></div>
+          <div class="field"><span>تعداد عکس</span><input id="lAutoN" inputmode="numeric" value="20"></div>
+          <div class="field wide"><span>چیدن در ردیف</span><select id="lAutoCols"><option value="auto">خودکار (بزرگ‌ترین اندازه)</option><option value="1">1 عکس در هر ردیف</option><option value="2">2 عکس در هر ردیف</option><option value="3">3 عکس در هر ردیف</option><option value="4">4 عکس در هر ردیف</option><option value="5">5 عکس در هر ردیف</option><option value="6">6 عکس در هر ردیف</option><option value="7">7 عکس در هر ردیف</option><option value="8">8 عکس در هر ردیف</option><option value="9">9 عکس در هر ردیف</option><option value="10">10 عکس در هر ردیف</option></select></div>
+          <div class="field"><span>فاصله‌ی بین عکس‌ها (cm)</span><input id="lAutoGap" inputmode="decimal" value="0.15"></div>
+          <div class="info" id="lAutoInfo">با روشن‌کردن این بخش، اندازه‌ی عکس‌ها از تعداد و اندازه‌ی برگه محاسبه می‌شود.</div>
+        </div>
         <h3>اندازه‌ی تصویر (Image Size)</h3>
         <div class="field"><span>عرض (cm)</span><input id="iW" inputmode="decimal"></div>
         <div class="field"><span>ارتفاع (cm)</span><input id="iH" inputmode="decimal"></div>
@@ -410,10 +418,12 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
     <div class="top rtacts">
       <button class="btn" id="rtAuto" disabled>✨ روتوش هوشمند خودکار</button>
       <button class="btn" id="rtSave" disabled>💾 ذخیره‌ی عکس</button>
+      <button class="btn" id="rtToLayout" disabled>🧩 ارسال به عکس‌چین (پرسنلی ساز)</button>
     </div>
     <div class="top rtacts">
       <button class="btn out" id="rtCompare" disabled>👁 نمایش قبل / بعد</button>
       <button class="btn out" id="rtReset" disabled>↺ بازنشانی</button>
+      <button class="btn out" id="rtClear" disabled>✕ حذف عکس</button>
     </div>
     <div class="panel rtctl">
       <label>روشنایی <input type="range" id="rtBright" min="-50" max="50" value="0"></label>
@@ -423,6 +433,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
       <label>نرمی پوست <input type="range" id="rtSmooth" min="0" max="10" value="0"></label>
       <label>شارپنس (وضوح) <input type="range" id="rtSharp" min="0" max="100" value="0"></label>
       <label>کاهش نویز <input type="range" id="rtNoise" min="0" max="50" value="0"></label>
+      <label>حذف لک و خال <input type="range" id="rtSpot" min="0" max="100" value="0"></label>
       <label>زوم <input type="range" id="rtZoom" min="1" max="3" step="0.05" value="1"></label>
     </div>
     <div id="rtOut"></div>

@@ -379,20 +379,25 @@
   function applyPortrait(mask, d, W, H) {
     var pr = portraitRegion(d, W, H);
     if (!pr) return mask;
-    var out = new Uint8Array(W * H), i, q, r, g, bl, mx, mn, sat, lum, y;
+    var out = new Uint8Array(W * H), i, q, r, g, bl, mx, mn, sat, lum, y, x, inFaceBox, wallBeside, wood, lowSatShirt, shoulder, person;
+    var f = pr.face;
     for (i = 0; i < W * H; i++) {
-      y = (i / W) | 0;
+      y = (i / W) | 0; x = i - y * W;
       q = i * 4; r = d[q]; g = d[q + 1]; bl = d[q + 2];
       mx = Math.max(r, g, bl); mn = Math.min(r, g, bl);
       sat = mx ? (mx - mn) / mx : 0; lum = 0.299 * r + 0.587 * g + 0.114 * bl;
-      // چوب تیره‌ی پشت‌زمینه: فقط ته‌ی عکس، خیلی تیره و خیلی اشباع (گردن و پوست را شامل نمی‌شود)
-      var wood = y > H * 0.86 && ((lum < 130 && sat > 0.4) || (lum < 170 && sat > 0.3 && r > g + 25));   // قهوه‌ای-قرمز تیره‌ی وسایل؛ پیراهن صورتی (روشن) مستثنی است
-      var xx = i % W; var corner = y > H * 0.8 && (xx < W * 0.12 || xx > W * 0.88) && sat > 0.25 && lum < 200 && r > g && g > bl;   // قهوه‌ای وسایل (قرمز>سبز>آبی)؛ پیراهن صورتی (قرمز>آبی>سبز) و آستین سفید مستثنی‌اند
-      // دیوار خیلی سفید (روشنایی بالای ۲۴۰ و کم‌اشباع) از شانه کنار می‌رود؛ پیراهن‌های رنگی و سفید معمولی سوژه‌اند
-      var shoulder = pr.inShoulder[i] && !(sat < 0.14 && lum > 240);
-      if ((pr.inBody[i] || shoulder) && !wood && !corner) out[i] = 1;   // تنه و شانه: سوژه
-      else if (pr.inHead[i] && mask[i]) out[i] = 1;          // سر و مو: فقط با تأیید رنگ
-      else out[i] = 0;
+      // چوب تیره‌ی پشت‌زمینه: فقط ته‌ی عکس، خیلی تیره و خیلی اشباع
+      wood = y > H * 0.86 && ((lum < 130 && sat > 0.4) || (lum < 170 && sat > 0.3 && r > g + 25));
+      // دیوار روشن و کم‌اشباع بیرون از چهره: پس‌زمینه
+      inFaceBox = x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1;
+      wallBeside = lum > 200 && sat < 0.12 && !inFaceBox;
+      // شانه: پیراهن کم‌اشباع با شکل هندسی؛ پیراهن رنگی با ماسک رنگی
+      lowSatShirt = sat < 0.14 && lum > 240;
+      shoulder = pr.inShoulder[i] && !lowSatShirt;
+      person = 0;
+      if ((pr.inBody[i] || shoulder) && !wood) person = 1;                         // تنه و شانه: سوژه
+      else if (pr.inHead[i] && mask[i] && !wallBeside) person = 1;                 // سر و مو: با تأیید رنگ، نه دیوار روشن
+      out[i] = person;
     }
     return out;
   }

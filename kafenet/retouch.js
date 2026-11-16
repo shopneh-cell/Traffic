@@ -20,7 +20,7 @@
   var R = {
     img: null, size: '34', zoom: 1, ox: 0, oy: 0,
     bright: 0, contrast: 0, smooth: 0, sat: 0, warm: 0, sharp: 0, noise: 0,
-    profile: null, kp: null, steps: [], showOriginal: false, whiteBg: true, mask: null, faceRect: null, selMode: false, raf: 0
+    profile: null, kp: null, steps: [], showOriginal: false, whiteBg: true, mask: null, faceRect: null, selMode: false, raf: 0, spot: 0
   };
   var selDrag = null;
   var drag = null;
@@ -124,6 +124,7 @@
       if (face) { x = p % w; y = (p - x) / w; if (face.rect) inFace = x >= face.rect.x0 && x <= face.rect.x1 && y >= face.rect.y0 && y <= face.rect.y1; else { var dx = (x - face.cx) / face.rx, dy = (y - face.cy) / face.ry; inFace = dx * dx + dy * dy <= 1; } }
       mask[p] = inSkin && inFace ? 1 : 0;
     }
+    var rawMask = mask;
     mask = boxBlur(mask, w, h, 2);
 
     // کاهش براقی روی پوست
@@ -146,6 +147,8 @@
       steps.push('کاهش قرمزی');
     }
 
+    // حذف لک و خال (قبل از نرم‌سازی تا بافت پوست یکنواخت بماند)
+    if (R.spot > 0) { var spN = removeSpots(a, w, h, rawMask, R.spot); if (spN) steps.push('حذف لک و خال'); }
     // نرم‌سازی پوست: فقط روی ماسک پوست (لبه‌ها و جزئیات حفظ می‌شوند)
     var sm = R.smooth;
     if (sm > 0) {
@@ -281,8 +284,28 @@
   // ماسک را یک بار بساز. فقط موتور پرتره؛ اگر مطمئن نبود، زمینه تغییر نمی‌کند.
   function ensureMask() {
     if (!R.img) return Promise.resolve(null);
-    if (!R.mask) R.mask = orientMask(bgMaskPortrait(R.img));   // فقط موتور پرتره؛ الگوریتم پشتیبان رنگی حذف شد (نتیجه‌ی بد می‌داد)
+    if (!R.mask) R.mask = orientMask(bgMaskPortrait(R.img));
+    if (!R.skinBox) R.skinBox = skinBoxOf(R.img);   // فقط موتور پرتره؛ الگوریتم پشتیبان رنگی حذف شد (نتیجه‌ی بد می‌داد)
     return Promise.resolve(R.mask);
+  }
+
+  // جعبه‌ی پوست عکس: داخلش هرگز پس‌زمینه حساب نمی‌شود (ابرو و پوست سفید نمی‌شوند)
+  function skinBoxOf(img) {
+    var sc = Math.min(1, 300 / img.width), w = Math.max(8, Math.round(img.width * sc)), h = Math.max(8, Math.round(img.height * sc));
+    var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    var x = cv.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+    var d = x.getImageData(0, 0, w, h).data, rows = new Int32Array(h), cols = new Int32Array(w), yy, xx;
+    for (yy = 0; yy < h; yy++) for (xx = 0; xx < w; xx++) {
+      var q = (yy * w + xx) * 4, r = d[q], g = d[q + 1], b = d[q + 2];
+      var cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b, cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
+      if (cb >= 77 && cb <= 127 && cr >= 133 && cr <= 173 && (0.299 * r + 0.587 * g + 0.114 * b) > 45) { rows[yy]++; cols[xx]++; }
+    }
+    var rmin = -1, rmax = -1, cmin = -1, cmax = -1, i;
+    for (i = 0; i < h; i++) if (rows[i] > w * 0.03) { if (rmin < 0) rmin = i; rmax = i; }
+    for (i = 0; i < w; i++) if (cols[i] > h * 0.03) { if (cmin < 0) cmin = i; cmax = i; }
+    if (rmin < 0 || cmin < 0) return null;
+    var m = 0.04;
+    return { x0: Math.max(0, cmin / w - m), x1: Math.min(1, (cmax + 1) / w + m), y0: Math.max(0, rmin / h - m), y1: Math.min(1, (rmax + 1) / h + m) };
   }
 
   // اعمال زمینه‌ی سفید: پیکسل‌های زمینه سفید می‌شوند، لبه‌ها نرم می‌مانند
@@ -297,12 +320,69 @@
         if (mx < 0 || my < 0 || mx >= M.w || my >= M.h) pm = 0;
         else pm = M.data[my * M.w + mx];
         if (F && u >= F.x0 && u <= F.x1 && v >= F.y0 && v <= F.y1) pm = 1;   // صورت هرگز سفید نشود
+        var SB = R.skinBox;
+        if (SB && u >= SB.x0 && u <= SB.x1 && v >= SB.y0 && v <= SB.y1) pm = 1;   // داخل جعبه‌ی پوست: هرگز سفید نشود
         var q = (y * w + x) * 4;
         a[q] = a[q] * pm + 255 * (1 - pm);
         a[q + 1] = a[q + 1] * pm + 255 * (1 - pm);
         a[q + 2] = a[q + 2] * pm + 255 * (1 - pm);
       }
     }
+  }
+
+  // ---- حذف لک، کک و خال ----
+  // نقطه‌های کوچک و تیره‌تر از پوست اطراف پیدا می‌شوند؛ با میانگین پوست سالمِ همان اطراف پر می‌شوند.
+  // خطوط (ابرو، لب، مو) و توده‌های بزرگ (ریش، سایه‌ی چشم) به‌خاطر شکلشان حذف نمی‌شوند.
+  function removeSpots(a, w, h, skin, S) {
+    var N = w * h, p, k, L = new Float32Array(N), i;
+    for (p = 0; p < N; p++) L[p] = 0.299 * a[p * 4] + 0.587 * a[p * 4 + 1] + 0.114 * a[p * 4 + 2];
+    var base = boxBlur(L, w, h, 6), T = 16 - 0.1 * S;   // S=60 → آستانه‌ی ۱۰
+    var cand = new Uint8Array(N), rm = new Uint8Array(N), lab = new Int32Array(N), stack = new Int32Array(N);
+    for (p = 0; p < N; p++) if (skin[p] > 0.5 && base[p] - L[p] > T) cand[p] = 1;
+    var maxA = Math.max(20, 0.0006 * N), id = 0, count = 0;
+    for (p = 0; p < N; p++) {
+      if (!cand[p] || lab[p]) continue;
+      id++; var sp = 0, minX = w, maxX = 0, minY = h, maxY = 0, area = 0, list = [];
+      stack[sp++] = p; lab[p] = id;
+      while (sp) {
+        var c = stack[--sp], cx = c % w, cy = (c - cx) / w;
+        area++; list.push(c);
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx; if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        if (area > maxA) break;
+        var nb = [c - 1, c + 1, c - w, c + w];
+        for (k = 0; k < 4; k++) {
+          var v = nb[k]; if (v < 0 || v >= N) continue;
+          if (Math.abs(v % w - cx) > 1) continue;
+          if (cand[v] && !lab[v]) { lab[v] = id; stack[sp++] = v; }
+        }
+      }
+      if (area > maxA || area < 1) continue;
+      var bw = maxX - minX + 1, bh = maxY - minY + 1;
+      if (bw / bh > 2.2 || bh / bw > 2.2) continue;     // خطی: ابرو، لب، مو
+      if (area / (bw * bh) < 0.45) continue;             // پراکنده: ریش
+      for (k = 0; k < list.length; k++) { rm[list[k]] = 1; count++; }
+    }
+    if (!count) return 0;
+    // رنگ جایگزین: میانگین پوست سالم (بدون نقطه‌ها) در همسایگی
+    var wS = new Float32Array(N), ch = new Float32Array(N), avg = [null, null, null];
+    for (p = 0; p < N; p++) wS[p] = (skin[p] > 0.5 && !cand[p]) ? 1 : 0;
+    var sw = boxBlur(wS, w, h, 5);
+    for (var c3 = 0; c3 < 3; c3++) {
+      for (p = 0; p < N; p++) ch[p] = a[p * 4 + c3] * wS[p];
+      var sc = boxBlur(ch, w, h, 5);
+      avg[c3] = new Float32Array(N);
+      for (p = 0; p < N; p++) avg[c3][p] = sc[p] / Math.max(sw[p], 1e-3);
+    }
+    // بافت طبیعی: کمی از جزئیات اطراف برمی‌گردد و لبه‌ها نرم می‌شوند
+    var rmF = new Float32Array(N);
+    for (p = 0; p < N; p++) rmF[p] = rm[p];
+    var m = boxBlur(rmF, w, h, 1);
+    for (p = 0; p < N; p++) {
+      var t = Math.min(1, m[p] * 2.5);
+      if (t < 0.02 || sw[p] < 0.05) continue;   // بدون پوست سالم در اطراف: دست نمی‌خورد
+      for (k = 0; k < 3; k++) a[p * 4 + k] = clamp255(a[p * 4 + k] * (1 - t) + avg[k][p] * t);
+    }
+    return count;
   }
 
   // رندر کادر در ابعاد دلخواه. forSave=false اگر نمایش قبل/بعد فعال باشد، نسخه‌ی اصلی برمی‌گردد.
@@ -415,6 +495,7 @@
     $r('rtSmooth').value = R.smooth;
     $r('rtSharp').value = R.sharp;
     $r('rtNoise').value = R.noise;
+    var spEl = $r('rtSpot'); if (spEl) spEl.value = R.spot;
     $r('rtZoom').value = R.zoom;
     document.querySelectorAll('.rt-pf').forEach(function (b) { b.classList.toggle('on', b.dataset.pf === R.profile); });
     var cmp = $r('rtCompare'); if (cmp) cmp.textContent = R.showOriginal ? '👁 نمایش نتیجه' : '👁 نمایش قبل / بعد';
@@ -438,7 +519,7 @@
   }
 
   function setButtons(on) {
-    ['rtCompare', 'rtReset'].forEach(function (id) { var b = $r(id); if (b) b.disabled = !on; });
+    ['rtCompare', 'rtReset', 'rtToLayout', 'rtClear'].forEach(function (id) { var b = $r(id); if (b) b.disabled = !on; });
   }
 
   // روتوش کامل خودکار: تشخیص چهره + کادربندی + پروفایل + تنظیمات نمونه + نور
@@ -450,7 +531,7 @@
     R.whiteBg = true;
     var finish = function (msg) {
       applyProfile(profileKey);
-      R.sat = AUTO_PRESET.sat; R.warm = AUTO_PRESET.warm; R.sharp = AUTO_PRESET.sharp; R.noise = AUTO_PRESET.noise;
+      R.sat = AUTO_PRESET.sat; R.warm = AUTO_PRESET.warm; R.sharp = AUTO_PRESET.sharp; R.noise = AUTO_PRESET.noise; R.spot = 60;
       autoLevels(); syncSliders(); drawPreview();
       var txt = typeof msg === 'function' ? msg() : msg;
       if (R.whiteBg && !R.mask) txt += ' ⚠ زمینه تغییر نکرد: سوژه را مطمئن تشخیص ندادم. کادر چهره را با مستطیل مشخص کن و دوباره بزن.';
@@ -484,9 +565,9 @@
     var im = new Image();
     im.onload = function () {
       R.img = im; R.zoom = 1; R.ox = 0; R.oy = 0; R.kp = null;
-      R.bright = 0; R.contrast = 0; R.smooth = 0; R.sat = 0; R.warm = 0; R.sharp = 0; R.noise = 0;
+      R.bright = 0; R.contrast = 0; R.smooth = 0; R.sat = 0; R.warm = 0; R.sharp = 0; R.noise = 0; R.spot = 0;
       R.profile = null; R.steps = []; R.showOriginal = false;
-      R.mask = null; syncSliders(); drawPreview(); setButtons(true); ensureMask().then(function () { drawPreview(); });
+      R.mask = null; R.skinBox = null; syncSliders(); drawPreview(); setButtons(true); ensureMask().then(function () { drawPreview(); });
       $r('rtAuto').disabled = false; $r('rtSave').disabled = false;
       status('عکس آماده است. «روتوش هوشمند خودکار» را بزن یا تنظیمات را دستی تغییر بده.');
     };
@@ -520,8 +601,14 @@
     rd.onload = async function () {
       try {
         var b64 = String(rd.result).split(',')[1];
-        var r = await FS.writeFile({ path: 'Traffic/' + name, data: b64, directory: 'DOCUMENTS', recursive: true });
-        status('فایل ذخیره شد (Documents/Traffic/' + name + ').');
+        var r = null, lastErr = null;
+        var dirs = ['CACHE', 'DATA'];   // حافظه‌ی برنامه؛ پوشه‌ی عمومی Documents روی اندروید جدید خطای FILE_NOTCREATED می‌دهد
+        for (var di = 0; di < dirs.length && !r; di++) {
+          try { r = await FS.writeFile({ path: 'traffic/' + name, data: b64, directory: dirs[di], recursive: true }); }
+          catch (e) { lastErr = e; }
+        }
+        if (!r) throw lastErr || new Error('نوشتن فایل ممکن نشد');
+        status('فایل آماده شد. از برگه‌ی باز‌شده «ذخیره در گالری» یا «ذخیره در فایل‌ها» را بزن.');
         if (SH && SH.share) await SH.share({ title: name, text: 'عکس روتوش‌شده', files: [r.uri], dialogTitle: 'ذخیره یا ارسال عکس' });
       } catch (e) { status('ذخیره ناموفق بود: ' + (e && e.message ? e.message : e)); }
     };
@@ -539,7 +626,7 @@
     var c = render(o.w, o.h, true);
     c.toBlob(function (blob) {
       if (!blob) { status('ساخت فایل ناموفق بود.'); return; }
-      var name = 'روتوش-' + (R.size === '34' ? '3x4' : '4x6') + '.jpg';
+      var name = 'retouch-' + (R.size === '34' ? '3x4' : '4x6') + '-' + (Date.now() % 100000) + '.jpg';
       if (window.desk && typeof downloadBlob === 'function') {
         downloadBlob(blob, name);
         status('فایل ذخیره شد: ' + name);
@@ -565,9 +652,40 @@
     }, 'image/jpeg', 0.95);
   }
 
+  // ارسال عکس روتوش‌شده به عکس‌چین و باز کردن حالت پرسنلی ساز
+  function sendToLayout() {
+    if (!R.img) return;
+    var o = outPx(R.size);
+    var c = render(o.w, o.h, true);
+    c.toBlob(function (blob) {
+      if (!blob) { status('ساخت عکس ناموفق بود.'); return; }
+      var name = 'retouch-' + (R.size === '34' ? '3x4' : '4x6') + '.jpg';
+      if (!window.layoutAddFiles) { status('عکس‌چین آماده نیست.'); return; }
+      window.layoutAddFiles([new File([blob], name, { type: 'image/jpeg' })]);
+      var ps = document.getElementById('ppSize');
+      if (ps) { ps.value = R.size === '34' ? '3x4' : '4x6'; ps.dispatchEvent(new Event('change')); }
+      var pass = document.getElementById('lModePass'); if (pass) pass.click();
+      var tab = document.querySelector('button.tab[data-tab="layout"]'); if (tab) tab.click();
+      status('عکس به عکس‌چین فرستاده شد (پرسنلی ساز).');
+    }, 'image/jpeg', 0.95);
+  }
+
+  // حذف عکس فعلی از روتوشر (بدون خروج از بخش)
+  function clearPhoto() {
+    R.img = null; R.mask = null; R.skinBox = null; R.faceRect = null; R.kp = null;
+    R.steps = []; R.showOriginal = false; R.selMode = false;
+    ctx.clearRect(0, 0, stage.width, stage.height);
+    setButtons(false);
+    ['rtAuto', 'rtSave'].forEach(function (id) { var b = $r(id); if (b) b.disabled = true; });
+    var box = $r('rtOut'); if (box) box.innerHTML = '';
+    var inp = $r('rtIn'); if (inp) inp.value = '';
+    var camIn = $r('rtCamIn'); if (camIn) camIn.value = '';
+    syncSliders();
+    status('عکس حذف شد. عکس تازه‌ای انتخاب کنید.');
+  }
   function resetAll() {
     if (!R.img) return;
-    R.bright = 0; R.contrast = 0; R.smooth = 0; R.sat = 0; R.warm = 0; R.sharp = 0; R.noise = 0;
+    R.bright = 0; R.contrast = 0; R.smooth = 0; R.sat = 0; R.warm = 0; R.sharp = 0; R.noise = 0; R.spot = 0;
     R.profile = null; R.showOriginal = false; R.steps = [];
     syncSliders(); drawPreview();
     status('تنظیمات به حالت اولیه برگشت.');
@@ -592,10 +710,12 @@
     el.oninput = function () { R[key] = +this.value * (scale || 1); R.showOriginal = false; schedule(); };
   };
   bind('rtBright', 'bright'); bind('rtContrast', 'contrast'); bind('rtSatur', 'sat'); bind('rtWarm', 'warm');
-  bind('rtSmooth', 'smooth'); bind('rtSharp', 'sharp'); bind('rtNoise', 'noise');
+  bind('rtSmooth', 'smooth'); bind('rtSharp', 'sharp'); bind('rtNoise', 'noise'); bind('rtSpot', 'spot');
   $r('rtZoom').oninput = function () { R.zoom = +this.value; schedule(); };
   $r('rtAuto').onclick = autoRetouch;
   $r('rtSave').onclick = save;
+  var tl = $r('rtToLayout'); if (tl) tl.onclick = sendToLayout;
+  var cl = $r('rtClear'); if (cl) cl.onclick = clearPhoto;
   $r('rtCompare').onclick = toggleCompare;
   var bgb = $r('rtBgW'); if (bgb) bgb.onclick = function () { R.whiteBg = !R.whiteBg; bgb.classList.toggle('on', R.whiteBg); drawPreview(); status(R.whiteBg ? 'زمینه‌ی سفید فعال است.' : 'زمینه‌ی اصلی نمایش داده می‌شود.'); };
   $r('rtReset').onclick = resetAll;

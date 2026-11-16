@@ -8,8 +8,9 @@
   var L = {
     items: [], sel: -1, search: '', page: 0,
     paper: { preset: 'A4', land: false, w: 21.0, h: 29.7 },
-    m: { t: 0.6, b: 0.6, l: 0.6, r: 0.6 },
-    gap: 0.3, dpi: 300, rot: true,
+    m: { t: 0.5, b: 0.5, l: 0.5, r: 0.5 },
+    gap: 0.15, dpi: 300, rot: true,
+    auto: { on: false, n: 20, cols: 'auto', gap: 0.15 },
     pages: [], skipped: [], cache: new Map(),
     pp: { on: false, size: '3x4', border: 0.1, copies: 6, gap: 0.1, prev: null }
   };
@@ -30,9 +31,8 @@
 
   // ---------- افزودن عکس ----------
   $('lAdd').onclick = function () { $('lIn').click(); };
-  $('lIn').onchange = async function (e) {
-    var files = Array.prototype.slice.call(e.target.files || []);
-    e.target.value = '';
+  window.layoutAddFiles = async function (fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
     for (var i = 0; i < files.length; i++) {
       status('در حال خواندن ' + (i + 1) + ' از ' + files.length + ' …');
       try {
@@ -45,6 +45,11 @@
     }
     if (L.sel < 0 && L.items.length) L.sel = 0;
     changed(); status(L.items.length + ' عکس در فهرست است.');
+  };
+  $('lIn').onchange = function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = '';
+    window.layoutAddFiles(files);
   };
 
   // ---------- فهرست عکس‌ها ----------
@@ -145,8 +150,47 @@
     return { pages: pages, skipped: skipped };
   }
 
+
+  // ---------- چیدن هوشمند ----------
+  // بزرگ‌ترین اندازه‌ی ممکن برای N عکس روی برگه (با نسبت ابعاد عکس)؛ اگر ستون ثابت باشد همان ستون‌ها بررسی می‌شود
+  function planAuto(ratio, N, PW, PH, gap, colsOpt) {
+    var cands = [], best = null;
+    if (colsOpt === 'auto') { for (var c = 1; c <= N; c++) cands.push(c); }
+    else cands.push(Math.min(N, Math.max(1, parseInt(colsOpt, 10) || 1)));
+    cands.forEach(function (cols) {
+      var rows = Math.ceil(N / cols);
+      var bw = (PW - (cols - 1) * gap) / cols, bh = (PH - (rows - 1) * gap) / rows;
+      if (bw <= 0 || bh <= 0) return;
+      var pw = Math.min(bw, bh * ratio), ph = pw / ratio, area = pw * ph;
+      if (!best || area > best.area + 1e-9 || (Math.abs(area - best.area) < 1e-9 && rows < best.rows))
+        best = { cols: cols, rows: rows, w: pw, h: ph, area: area };
+    });
+    return best;
+  }
+  function setAutoInfo(t) { var e = $('lAutoInfo'); if (e) e.textContent = t; }
+
+  function computeAuto(pa) {
+    var N = Math.max(1, Math.min(500, Math.floor(L.auto.n) || 1));
+    var pl = planAuto(L.items[0].ratio, N, pa.PW, pa.PH, L.auto.gap, L.auto.cols);
+    if (!pl) return false;
+    var list = [];
+    for (var k = 0; k < N; k++) {
+      var ref = k % L.items.length, it = L.items[ref];
+      var fw = Math.min(pl.w, pl.h * it.ratio);
+      list.push({ ref: ref, w: fw, h: fw / it.ratio, name: it.name });
+    }
+    var res = pack(list, pa.PW, pa.PH, L.auto.gap, false);
+    L.pages = res.pages; L.skipped = res.skipped;
+    if (L.page >= L.pages.length) L.page = Math.max(0, L.pages.length - 1);
+    setAutoInfo(N + ' عکس · ' + pl.cols + ' عکس در هر ردیف · ' + pl.rows + ' ردیف · اندازه‌ی هر عکس ' +
+      fmt(pl.w) + ' × ' + fmt(pl.h) + ' سانتی‌متر · ' + L.pages.length + ' صفحه' +
+      (res.skipped.length ? ' · ' + res.skipped.length + ' عکس جا نشد' : ''));
+    return true;
+  }
+
   function computeLayout() {
     var pa = printable(), list = [];
+    if (L.auto.on && L.items.length && !L.pp.on) { if (computeAuto(pa)) return; }
     if (L.pp.on) {
       var sz = PP_SIZE[L.pp.size], b = L.pp.border;
       L.items.forEach(function (it, i) {
@@ -295,6 +339,15 @@
     lastSig = UNDO.pop(); applySig(lastSig); render(); status('برگشت انجام شد.');
   };
   $('lUndo').onclick = function () { window.layoutUndo(); };
+
+
+  // ---------- کنترل‌های چیدن هوشمند ----------
+  var dbAutoN = debounce('autoN', function (v) { var n = Math.floor(toNum(v)); if (n > 0) L.auto.n = Math.min(500, n); changed(); }, 200);
+  var dbAutoGap = debounce('autoGap', function (v) { var g = toNum(v); if (isFinite(g)) L.auto.gap = Math.max(0, Math.min(2, g)); changed(); }, 200);
+  if ($('lAutoOn')) $('lAutoOn').onchange = function () { L.auto.on = this.checked; changed(); };
+  if ($('lAutoN')) $('lAutoN').oninput = function () { dbAutoN(this.value); };
+  if ($('lAutoGap')) $('lAutoGap').oninput = function () { dbAutoGap(this.value); };
+  if ($('lAutoCols')) $('lAutoCols').onchange = function () { L.auto.cols = this.value; changed(); };
 
   // ---------- تنظیمات ورودی ----------
   $('pPreset').onchange = function () {
