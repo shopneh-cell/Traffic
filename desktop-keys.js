@@ -85,4 +85,21 @@
     else if (k === 't') { e.preventDefault(); window.__toggleTheme(); }
   });
 
+
+  // ---------- کلیدهای میانبر ----------
+  window.__trafficMainKeys = true;
+  window.printLastInvoice = function () {
+    var last = (typeof db !== 'undefined' && db.i && db.i[0]);
+    if (!last) { alert('هنوز فاکتوری ثبت نشده است.'); return; }
+    go('show', last.id);
+    setTimeout(function () { if (window.openPrintCenter) window.openPrintCenter('فاکتور ' + (last.no || '')); }, 400);
+  };
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    var k = String(e.key).toLowerCase();
+    if (k === 'd') { e.preventDefault(); go('sale'); }
+    else if (k === 'f') { e.preventDefault(); go('items'); setTimeout(function () { var q = document.querySelector('.srch'); if (q) q.focus(); }, 200); }
+    else if (k === 's') { e.preventDefault(); if (typeof bkSave === 'function') bkSave(); }
+    else if (k === 'p') { e.preventDefault(); printLastInvoice(); }
+  }, true);
 })();

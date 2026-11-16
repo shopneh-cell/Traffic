@@ -38,7 +38,7 @@
 
   // Ctrl+P در همه‌ی پنجره‌ها (اصلی و کافی‌نت یار)
   document.addEventListener('keydown', function (e) {
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && String(e.key).toLowerCase() === 'p') {
+    if (!window.__trafficMainKeys && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && String(e.key).toLowerCase() === 'p') {
       e.preventDefault();
       e.stopImmediatePropagation();
       openCenter();
