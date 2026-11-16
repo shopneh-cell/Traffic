@@ -25,7 +25,7 @@
     clone.querySelectorAll('script,style,button,nav,.no-print,[data-no-print],#md,.toast').forEach((n) => n.remove());
     const dir = document.documentElement.getAttribute('dir') || 'rtl';
     const html = '<!doctype html><html lang="fa" dir="' + dir + '"><head><meta charset="utf-8">' +
-      '<style>' + allCss() + '\n@page{size:A4;margin:10mm}html,body{background:#fff!important;color:#000!important}</style>' +
+      '<style>' + allCss() + '\n@page{size:A4;margin:10mm}html,body{background:#fff!important;color:#000!important}html,body{margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:visible!important}#pp,#pp *{margin-left:auto;margin-right:auto}#pp img{page-break-after:auto!important;page-break-before:auto!important;max-width:100%!important;max-height:272mm!important;height:auto!important;width:auto!important;display:block;margin:0 auto}#pp img+img{page-break-before:always!important}img{page-break-inside:avoid}</style>' +
       '</head><body>' + clone.outerHTML + '</body></html>';
     api.openPreview({ html, title: String(title || document.title || 'چاپ').slice(0, 160) })
       .catch((error) => alert('خطا در مرکز چاپ: ' + error.message));
