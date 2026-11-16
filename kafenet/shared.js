@@ -96,7 +96,12 @@
       return;
     }
     // ویندوز: پنجره‌ی داخلی برنامه
-    if (window.desk && window.desk.openSite) { window.desk.openSite(u); return; }
+    if (window.desk && window.desk.openSite) {
+      Promise.resolve(window.desk.openSite(u)).then(function (r) {
+        if (!r || !r.ok) window.open(u, '_blank');
+      }, function () { window.open(u, '_blank'); });
+      return;
+    }
     window.open(u, '_blank');
   };
 

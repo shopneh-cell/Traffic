@@ -397,11 +397,13 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
       <button class="chip rt-pf" data-pf="pro">پرسنلی حرفه‌ای</button>
     </div>
     <div class="top">
-      <button class="chip rt-bgw on" id="rtBgW">زمینه‌ی سفید خودکار</button>
+      <button class="chip rt-bgw" id="rtBgW">زمینه‌ی سفید خودکار (آزمایشی)</button>
     </div>
     <div class="top">
       <button class="chip" id="rtSel">🟦 انتخاب چهره با مستطیل</button>
       <button class="chip" id="rtSelClr">پاک‌کردن کادر</button>
+      <button class="chip" id="rtWand">👆 پاک‌کردن زمینه با لمس</button>
+      <button class="chip" id="rtWandClr">پاک‌کردن لمس‌ها</button>
     </div>
     <details class="rtsteps"><summary>مراحل روتوش</summary>
       <ul>
@@ -434,6 +436,7 @@ svg.ic{width:20px;height:20px;flex-shrink:0;vertical-align:middle;display:inline
       <label>شارپنس (وضوح) <input type="range" id="rtSharp" min="0" max="100" value="0"></label>
       <label>کاهش نویز <input type="range" id="rtNoise" min="0" max="50" value="0"></label>
       <label>حذف لک و خال <input type="range" id="rtSpot" min="0" max="100" value="0"></label>
+      <label>حساسیت پاک‌کن زمینه <input type="range" id="rtWandTol" min="4" max="60" value="28"></label>
       <label>زوم <input type="range" id="rtZoom" min="1" max="3" step="0.05" value="1"></label>
     </div>
     <div id="rtOut"></div>

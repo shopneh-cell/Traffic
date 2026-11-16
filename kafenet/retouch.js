@@ -20,7 +20,7 @@
   var R = {
     img: null, size: '34', zoom: 1, ox: 0, oy: 0,
     bright: 0, contrast: 0, smooth: 0, sat: 0, warm: 0, sharp: 0, noise: 0,
-    profile: null, kp: null, steps: [], showOriginal: false, whiteBg: true, mask: null, faceRect: null, selMode: false, raf: 0, spot: 0
+    profile: null, kp: null, steps: [], showOriginal: false, whiteBg: false, mask: null, faceRect: null, selMode: false, raf: 0, spot: 0, grid: null, manual: null, wandMode: false
   };
   var selDrag = null;
   var drag = null;
@@ -310,18 +310,23 @@
 
   // اعمال زمینه‌ی سفید: پیکسل‌های زمینه سفید می‌شوند، لبه‌ها نرم می‌مانند
   function applyWhiteBg(a, w, h, g, k) {
-    if (!R.mask) return;
-    var M = R.mask, iw = R.img.width, ih = R.img.height, F = R.faceRect;
+    var M = R.mask, G = R.grid, F = R.faceRect, SB = R.skinBox, auto = !!(R.whiteBg && M);
+    var iw = R.img.width, ih = R.img.height;
     for (var y = 0; y < h; y++) {
       var v = ((y / k - g.y0) / g.s) / ih;
       for (var x = 0; x < w; x++) {
-        var u = ((x / k - g.x0) / g.s) / iw;
-        var mx = Math.floor(u * M.w), my = Math.floor(v * M.h), pm;
-        if (mx < 0 || my < 0 || mx >= M.w || my >= M.h) pm = 0;
-        else pm = M.data[my * M.w + mx];
-        if (F && u >= F.x0 && u <= F.x1 && v >= F.y0 && v <= F.y1) pm = 1;   // صورت هرگز سفید نشود
-        var SB = R.skinBox;
-        if (SB && u >= SB.x0 && u <= SB.x1 && v >= SB.y0 && v <= SB.y1) pm = 1;   // داخل جعبه‌ی پوست: هرگز سفید نشود
+        var u = ((x / k - g.x0) / g.s) / iw, pm = 1;
+        if (auto) {
+          var mx = Math.floor(u * M.w), my = Math.floor(v * M.h);
+          pm = (mx < 0 || my < 0 || mx >= M.w || my >= M.h) ? 0 : M.data[my * M.w + mx];
+        }
+        if (G && R.manual) {
+          var gx = Math.floor(u * G.w), gy = Math.floor(v * G.h);
+          if (gx >= 0 && gy >= 0 && gx < G.w && gy < G.h && R.manual[gy * G.w + gx]) pm = 0;
+        }
+        if (F && u >= F.x0 && u <= F.x1 && v >= F.y0 && v <= F.y1) pm = 1;   // صورت انتخاب‌شده سفید نمی‌شود
+        if (SB && u >= SB.x0 && u <= SB.x1 && v >= SB.y0 && v <= SB.y1) pm = 1;   // داخل پوست هرگز سفید نمی‌شود
+        if (pm >= 1) continue;
         var q = (y * w + x) * 4;
         a[q] = a[q] * pm + 255 * (1 - pm);
         a[q + 1] = a[q + 1] * pm + 255 * (1 - pm);
@@ -396,7 +401,7 @@
     var im = x.getImageData(0, 0, w, h), N = w * h;
     toneAdjust(im.data, N);
     if (R.noise > 0) denoise(im.data, w, h);
-    if (R.whiteBg && R.mask) applyWhiteBg(im.data, w, h, g, k);
+    if ((R.whiteBg && R.mask) || R.manual) applyWhiteBg(im.data, w, h, g, k);
     var T = { face: null, eyes: null, mouth: null, d: 0 };
     if (R.faceRect) {
       var rr = rectToStage(R.faceRect, g);
@@ -528,7 +533,6 @@
     status('در حال تشخیص چهره ...');
     var profileKey = R.profile || 'natural';
     R.showOriginal = false;
-    R.whiteBg = true;
     var finish = function (msg) {
       applyProfile(profileKey);
       R.sat = AUTO_PRESET.sat; R.warm = AUTO_PRESET.warm; R.sharp = AUTO_PRESET.sharp; R.noise = AUTO_PRESET.noise; R.spot = 60;
@@ -567,6 +571,7 @@
       R.img = im; R.zoom = 1; R.ox = 0; R.oy = 0; R.kp = null;
       R.bright = 0; R.contrast = 0; R.smooth = 0; R.sat = 0; R.warm = 0; R.sharp = 0; R.noise = 0; R.spot = 0;
       R.profile = null; R.steps = []; R.showOriginal = false;
+      R.grid = null; R.manual = null; R.wandMode = false;
       R.mask = null; R.skinBox = null; syncSliders(); drawPreview(); setButtons(true); ensureMask().then(function () { drawPreview(); });
       $r('rtAuto').disabled = false; $r('rtSave').disabled = false;
       status('عکس آماده است. «روتوش هوشمند خودکار» را بزن یا تنظیمات را دستی تغییر بده.');
@@ -670,6 +675,47 @@
     }, 'image/jpeg', 0.95);
   }
 
+  // ---- پاک‌کن زمینه با لمس: ناحیه‌ای با رنگ نزدیک به نقطه‌ی لمس سفید می‌شود ----
+  function ensureGrid() {
+    if (!R.img) return null;
+    if (!R.grid) {
+      var gw = Math.min(480, R.img.width), gh = Math.max(2, Math.round(gw * R.img.height / R.img.width));
+      var c = document.createElement('canvas'); c.width = gw; c.height = gh;
+      var x = c.getContext('2d'); x.drawImage(R.img, 0, 0, gw, gh);
+      R.grid = { w: gw, h: gh, data: x.getImageData(0, 0, gw, gh).data };
+      R.manual = new Uint8Array(gw * gh);
+    }
+    return R.grid;
+  }
+  function wandAt(u, v, tol) {
+    var g = ensureGrid(); if (!g) return;
+    var x0 = Math.floor(u * g.w), y0 = Math.floor(v * g.h);
+    if (x0 < 0 || y0 < 0 || x0 >= g.w || y0 >= g.h) return;
+    var d = g.data, seed = (y0 * g.w + x0) * 4, sr = d[seed], sg = d[seed + 1], sb = d[seed + 2];
+    var seen = new Uint8Array(g.w * g.h), stack = [y0 * g.w + x0];
+    seen[stack[0]] = 1;
+    while (stack.length) {
+      var p = stack.pop(), q = p * 4;
+      var dr = d[q] - sr, dg = d[q + 1] - sg, db = d[q + 2] - sb;
+      if (Math.sqrt(dr * dr + dg * dg + db * db) > tol) continue;
+      R.manual[p] = 1;
+      var px = p % g.w, py = (p - px) / g.w;
+      if (px > 0 && !seen[p - 1]) { seen[p - 1] = 1; stack.push(p - 1); }
+      if (px < g.w - 1 && !seen[p + 1]) { seen[p + 1] = 1; stack.push(p + 1); }
+      if (py > 0 && !seen[p - g.w]) { seen[p - g.w] = 1; stack.push(p - g.w); }
+      if (py < g.h - 1 && !seen[p + g.w]) { seen[p + g.w] = 1; stack.push(p + g.w); }
+    }
+  }
+  function wandTap(q) {
+    if (!R.img) return;
+    var g = geom();
+    var u = ((q.x - g.x0) / g.s) / R.img.width, v = ((q.y - g.y0) / g.s) / R.img.height;
+    if (u < 0 || v < 0 || u > 1 || v > 1) return;
+    var tolEl = $r('rtWandTol'), tol = tolEl ? +tolEl.value : 28;
+    wandAt(u, v, tol);
+    status('زمینه‌ی لمس‌شده سفید شد. اگر زیادی شد، حساسیت را کم کن.');
+  }
+
   // حذف عکس فعلی از روتوشر (بدون خروج از بخش)
   function clearPhoto() {
     R.img = null; R.mask = null; R.skinBox = null; R.faceRect = null; R.kp = null;
@@ -716,6 +762,8 @@
   $r('rtSave').onclick = save;
   var tl = $r('rtToLayout'); if (tl) tl.onclick = sendToLayout;
   var cl = $r('rtClear'); if (cl) cl.onclick = clearPhoto;
+  var wb = $r('rtWand'); if (wb) wb.onclick = function () { R.wandMode = !R.wandMode; wb.classList.toggle('on', R.wandMode); status(R.wandMode ? 'روی زمینه‌ای که باید سفید شود لمس کن.' : 'حالت پاک‌کن زمینه خاموش شد.'); };
+  var wc = $r('rtWandClr'); if (wc) wc.onclick = function () { if (R.grid) R.manual = new Uint8Array(R.grid.w * R.grid.h); drawPreview(); status('لمس‌های پاک‌کن زمینه پاک شد.'); };
   $r('rtCompare').onclick = toggleCompare;
   var bgb = $r('rtBgW'); if (bgb) bgb.onclick = function () { R.whiteBg = !R.whiteBg; bgb.classList.toggle('on', R.whiteBg); drawPreview(); status(R.whiteBg ? 'زمینه‌ی سفید فعال است.' : 'زمینه‌ی اصلی نمایش داده می‌شود.'); };
   $r('rtReset').onclick = resetAll;
@@ -728,6 +776,7 @@
   stage.addEventListener('pointerdown', function (e) {
     if (!R.img) return;
     stage.setPointerCapture(e.pointerId);
+    if (R.wandMode) { wandTap(toStage(e)); schedule(); return; }
     if (R.selMode) { var q = toStage(e); selDrag = { x0: q.x, y0: q.y, x1: q.x, y1: q.y }; schedule(); return; }
     drag = { x: e.clientX, y: e.clientY, ox: R.ox, oy: R.oy };
   });
