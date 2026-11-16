@@ -86,7 +86,7 @@
   // پنجره‌ی تنظیمات: پوشه‌ی ذخیره و چاپگر
   // ---------- سایت‌های ثبت‌نام یار (ذخیره‌ی مشترک) ----------
   window.knSites = function () { try { return JSON.parse(localStorage.getItem('kn_sites') || '[]'); } catch (e) { return []; } };
-  window.knSitesSave = function (list) { localStorage.setItem('kn_sites', JSON.stringify(list)); if (window.sitesRefresh) window.sitesRefresh(); };
+  window.knSitesSave = function (list) { localStorage.setItem('kn_sites', JSON.stringify(list)); try { if (window.opener && window.opener.__trafficSaveSites) window.opener.__trafficSaveSites(list); } catch (e) {} if (window.sitesRefresh) window.sitesRefresh(); };
   window.knSiteOpen = function (url) {
     var u = String(url || '').trim(); if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
     // اندروید: مرورگر داخلی برنامه (Capacitor Browser)؛ بدون رفتن به مرورگر بیرونی
