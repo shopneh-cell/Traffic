@@ -235,29 +235,20 @@ function debStart(c){
   for(const e of ev){ const prev=run; run+=e.v; if(run>0&&prev<=0) start=e.t; if(run<=0) start=null; }
   return start;
 }
-function debMsgText(c){
-  const amt=bal(c), st0=debStart(c)||((db.i.filter(i=>i.cu==c.id).slice(-1)[0]||{}).t)||Date.now();
-  return 'با سلام واحترام مبلغ باقیمانده حساب شما در کافی نت و تحریر ترافیک از تاریخ '+jStr(st0)+' الی '+jToday()+' مبلغ '+n(amt)+' ریال می باشد\nلطفا نسبت به پرداخت بدهی خود اقدام نمایید\nباتشکر';
-}
-function debMsgOpen(id){
-  const c=db.c.find(x=>x.id==id); if(!c) return;
-  if(!(bal(c)>0)) return alert('این مشتری بدهی ندارد.');
-  const m=$('#md'); m.className='md';
-  m.innerHTML='<div class="mb"><div class="row"><b>پیام بدهی به '+esc(c.n)+'</b><span class="ib" onclick="mc()">✕</span></div>'+
-    '<label class="m" style="display:block;margin-top:8px">شماره‌ی مشتری</label><input id="dmPh" value="'+esc(c.ph||'')+'" style="width:100%">'+
-    '<label class="m" style="display:block;margin-top:8px">متن پیام (قابل ویرایش)</label><textarea id="dmTxt" rows="7" style="width:100%">'+esc(debMsgText(c))+'</textarea>'+
-    '<div class="top" style="gap:8px;margin-top:10px"><button class="btn" onclick="smsSend($(\'#dmPh\').value,$(\'#dmTxt\').value)">📩 ارسال با پیامک</button><button class="btn out" onclick="copyTxt($(\'#dmTxt\').value)">📋 کپی متن</button></div></div>';
-}
-function copyTxt(s){ try{ navigator.clipboard.writeText(s); }catch(e){} alert('متن کپی شد.'); }
+function copyTxt(s){ try{ navigator.clipboard.writeText(s).catch(function(){}); }catch(e){} alert('متن کپی شد.'); }
 async function smsSend(phone,text){
   const ph=String(phone||'').replace(/[^0-9+]/g,'');
   if(!ph) return alert('شماره‌ی مشتری را وارد کنید.');
-  try{ navigator.clipboard.writeText(text); }catch(e){}
+  try{ navigator.clipboard.writeText(text).catch(function(){}); }catch(e){}
   const C=window.Capacitor;
-  if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Share){
-    try{ await C.Plugins.Share.share({title:'پیام بدهی',text:text,dialogTitle:'ارسال با پیامک به '+ph+' (متن کپی شد)'}); }
-    catch(e){ alert('ارسال ناموفق بود: '+(e&&e.message?e.message:e)); }
-  } else { alert('این قابلیت فقط در نسخه‌ی اندروید است. متن کپی شد.'); }
+  if(!(C&&C.isNativePlatform&&C.isNativePlatform())) return alert('ارسال پیامک فقط در نسخه‌ی اندروید است. متن کپی شد.');
+  const P=C.Plugins||{};
+  if(P.SmsComposer){
+    try{ await P.SmsComposer.compose({number:ph,body:text}); }
+    catch(e){ alert('باز کردن برنامه‌ی پیامک ناموفق بود: '+(e&&e.message?e.message:e)); }
+    return;
+  }
+  const a=document.createElement('a'); a.href='sms:'+ph+'?body='+encodeURIComponent(text); a.click();
 }
 function inboxOpen(){
   const m=$('#md'); m.className='md';
@@ -282,7 +273,7 @@ function cardsHtml(){
   const L=db.cards||[];
   const rows=L.map(c=>`<div class="row" style="padding:6px 0;border-top:1px solid var(--l)"><span><b>${esc(c.bank)}</b> · ${esc(c.holder)}<br><small>${esc(c.no)}</small></span><span class="acts"><i onclick="cardDef('${c.id}')" title="پیش‌فرض" style="cursor:pointer">${c.def?'⭐':'☆'}</i><i onclick="cardDel('${c.id}')" style="cursor:pointer">🗑</i></span></div>`).join('');
   return `<div class="card"><b>💳 مدیریت کارت‌های بانکی</b><small class="m" style="display:block;margin:4px 0">کارتی که در پیام بدهی انتخاب کنی، شماره‌ی آن برای مشتری نوشته می‌شود.</small>${rows||'<p class="m">کارتی ثبت نشده است.</p>'}`+
-    `<input id="cdBank" placeholder="نام بانک" style="width:100%;margin-top:6px"><input id="cdHolder" placeholder="نام صاحب کارت" style="width:100%;margin-top:6px"><input id="cdNo" inputmode="numeric" placeholder="شماره‌ی کارت (۱۶ رقم)" style="width:100%;margin-top:6px"><button class="btn" style="margin-top:6px" onclick="cardAdd()">+ افزودن کارت</button></div>`;
+    `<input id="cdBank" placeholder="نام بانک" style="width:100%;margin-top:6px"><input id="cdHolder" placeholder="نام صاحب کارت" style="width:100%;margin-top:6px"><input id="cdNo" inputmode="numeric" placeholder="شماره‌ی کارت (۱۶ رقم)" style="width:100%;margin-top:6px"><button class="btn" style="margin-top:6px" onclick="cardAdd()">+ افزودن کارت</button><button class="btn out" style="margin-top:6px" onclick="go('dmsgset')">💬 تنظیم متن پیام بدهی</button></div>`;
 }
 function cardAdd(){
   const bank=$('#cdBank').value.trim(), holder=$('#cdHolder').value.trim(), no=djDigits($('#cdNo').value).replace(/\D/g,'');
@@ -308,10 +299,13 @@ function msgsFor(me){return (db.msg||[]).filter(m=>m.to==me.id||m.to=='all'||m.f
 function msgNew(me){return (db.msg||[]).filter(m=>(m.to==me.id||m.to=='all')&&m.st=='new').length}
 function msgNameOf(id){return (recipients().find(x=>x.id==id)||{}).n||id}
 function msgSend(to,text){
-  const me=meU(); text=String(text||'').trim(); if(!text) return alert('متن پیام را بنویسید');
+  const me=meU(); text=String(text||'').trim();
+  if(!text&&!msgPending) return alert('متن پیام یا فایل را وارد کنید');
   db.msg=db.msg||[];
-  db.msg.push({id:'msg'+Date.now()+rid(),t:Date.now(),from:me.id,fromN:me.n,to,toN:msgNameOf(to),kind:'text',text,st:'new'});
-  save(); render();
+  const m={id:'msg'+Date.now()+rid(),t:Date.now(),from:me.id,fromN:me.n,to,toN:msgNameOf(to),kind:'text',text,st:'new'};
+  if(msgPending) m.att=msgPending;
+  msgPending=null;
+  db.msg.push(m); save(); render();
 }
 function preInvSend(){
   if(!cart.length) return alert('سبد فروش خالی است');
@@ -357,34 +351,78 @@ function inboxHtml(){
       body=`<b>📄 پیش‌فاکتور (${n(inv.l.length)} قلم)</b><div class="m">مشتری: ${esc(cust?cust.n:'بدون مشتری')} · مبلغ: ${n(inv.tot||0)} ریال</div>`;
       if(mineIn&&m.st=='new') body+=`<div class="top" style="gap:6px;margin-top:6px"><button class="btn" onclick="msgApprove('${m.id}')">✅ تأیید و ثبت فاکتور</button><button class="btn out" onclick="msgReject('${m.id}')">✕ رد</button></div>`;
     } else body=`<div>${esc(m.text)}</div>`;
+    if(m.att) body+=attHtml(m.att);
     const badge={new:'⏳ در انتظار',approved:'✅ تأیید شد',rejected:'✕ رد شد'}[m.st]||'';
     return `<div class="card">${head}<div style="margin:6px 0">${body}</div><small class="m">${mine?'ارسالی':'دریافتی'} · ${badge}</small></div>`;
   }).join('');
   return `<div class="card"><h4 style="margin:4px 0 8px">📥 صندوق (${n(msgNew(me))} پیام جدید)</h4>`+
-    `<select id="msTo" style="width:100%;margin-bottom:6px">${opts}</select><textarea id="msTxt" rows="2" placeholder="متن پیام…" style="width:100%"></textarea>`+
+    `<select id="msTo" style="width:100%;margin-bottom:6px">${opts}</select><textarea id="msTxt" rows="2" placeholder="متن پیام…" style="width:100%"></textarea><input type="file" id="msFile" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="msgAttach(this)" style="margin-top:6px;width:100%"><div id="msAttInfo" class="m"></div>`+
     `<button class="btn" style="margin-top:6px" onclick="msgSend($('#msTo').value,$('#msTxt').value)">ارسال پیام</button></div>`+
     (items||'<p class="m" style="text-align:center">پیامی نیست.</p>');
 }
 function alertsInbox(){const k=msgNew(meU());return k?'<div class="card" style="border:1px solid #2f6fd0"><b>📥 '+n(k)+' پیام جدید در صندوق</b> <button class="btn out" onclick="go(\'inbox\')">باز کردن</button></div>':''}
 // ---------- پیام بدهی با انتخاب کارت ----------
-function debMsgText(c,cd){
-  const amt=bal(c), st0=debStart(c)||((db.i.filter(i=>i.cu==c.id).slice(-1)[0]||{}).t)||Date.now();
-  return 'با سلام واحترام مبلغ باقیمانده حساب شما در کافی نت و تحریر ترافیک از تاریخ '+jStr(st0)+' الی '+jToday()+' مبلغ '+n(amt)+' ریال می باشد\nلطفا نسبت به پرداخت بدهی خود اقدام نمایید'+(cd?'\n'+cardLine(cd):'')+'\nباتشکر';
-}
 function debMsgRefresh(id){const c=db.c.find(x=>x.id==id);$('#dmTxt').value=debMsgText(c,cardById($('#dmCard').value))}
+
+// ---------- تنظیم پیام بدهی ----------
+const DMSG_DEFAULT='با سلام واحترام مبلغ باقیمانده حساب شما در کافی نت و تحریر ترافیک از تاریخ {from} الی {to} مبلغ {amount} ریال می باشد\nلطفا نسبت به پرداخت بدهی خود اقدام نمایید\n{card}\nباتشکر';
+function dmsgCfg(){const d=db.dmsg||{};return {tpl:d.tpl||DMSG_DEFAULT,card:d.card||''}}
+function debMsgText(c,cd){
+  const cfg=dmsgCfg(), amt=bal(c);
+  const st0=debStart(c)||((db.i.filter(i=>i.cu==c.id).slice(-1)[0]||{}).t)||Date.now();
+  const t=cfg.tpl.replace(/\{from\}/g,jStr(st0)).replace(/\{to\}/g,jToday()).replace(/\{amount\}/g,n(amt)).replace(/\{card\}/g,cd?cardLine(cd):'');
+  return t.replace(/\n[ \t]*\n/g,'\n').replace(/\n+$/,'');
+}
+function dmsgSettingsHtml(){
+  const cfg=dmsgCfg();
+  const opts='<option value="">بدون شماره کارت</option>'+(db.cards||[]).map(k=>`<option value="${k.id}" ${cfg.card==k.id?'selected':''}>${esc(k.bank)} - ${esc(k.no)}</option>`).join('');
+  return `<div class="card"><h4 style="margin:4px 0">💬 تنظیم پیام بدهی</h4><small class="m">متن زیر در پیام بدهی به مشتری می‌آید. کلمه‌های {from} و {to} و {amount} و {card} با اطلاعات مشتری و کارت انتخابی پر می‌شوند.</small>`+
+    `<label class="m" style="display:block;margin-top:8px">کارت پیش‌فرض برای پرداخت</label><select id="dsCard" style="width:100%">${opts}</select>`+
+    `<label class="m" style="display:block;margin-top:8px">متن پیام</label><textarea id="dsTpl" rows="9" style="width:100%">${esc(cfg.tpl)}</textarea>`+
+    `<div class="top" style="gap:8px;margin-top:8px"><button class="btn" onclick="dmsgSave()">ذخیره</button><button class="btn out" onclick="dmsgReset()">متن پیش‌فرض</button></div></div>`;
+}
+function dmsgSave(){db.dmsg={tpl:$('#dsTpl').value,card:$('#dsCard').value};save();alert('تنظیم پیام بدهی ذخیره شد.')}
+function dmsgReset(){$('#dsTpl').value=DMSG_DEFAULT}
+// ---------- پیوست صندوق (عکس و فایل) ----------
+let msgPending=null;
+function attHtml(a){
+  return /^image\//.test(a.type||'')
+    ? `<img src="${a.data}" style="max-width:100%;border-radius:8px;margin-top:6px">`
+    : `<a href="${a.data}" download="${esc(a.name)}" style="display:inline-block;margin-top:6px">📎 ${esc(a.name)}</a>`;
+}
+function msgAttach(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const info=(name,kb)=>{const e=document.getElementById('msAttInfo');if(e)e.textContent='پیوست: '+name+' ('+kb+' کیلوبایت)'};
+  const r=new FileReader();
+  if(/^image\//.test(f.type)){
+    r.onload=()=>{const im=new Image();im.onload=()=>{
+      const sc=Math.min(1,1000/Math.max(im.width,im.height));
+      const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*sc));c.height=Math.max(1,Math.round(im.height*sc));
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      msgPending={name:f.name,type:'image/jpeg',data:c.toDataURL('image/jpeg',0.8)};
+      info(f.name,Math.round(msgPending.data.length/1024));
+    };im.src=r.result};
+    r.readAsDataURL(f);
+  } else {
+    if(f.size>400*1024) return alert('فایل بزرگ‌تر از ۴۰۰ کیلوبایت است. فایل کوچک‌تری بفرستید.');
+    r.onload=()=>{msgPending={name:f.name,type:f.type||'application/octet-stream',data:r.result};info(f.name,Math.round(f.size/1024))};
+    r.readAsDataURL(f);
+  }
+}
 function debMsgOpen(id){
   const c=db.c.find(x=>x.id==id); if(!c) return;
   if(!(bal(c)>0)) return alert('این مشتری بدهی ندارد.');
-  const def=cardDefault();
-  const opts='<option value="">بدون شماره کارت</option>'+(db.cards||[]).map(k=>`<option value="${k.id}" ${def&&def.id==k.id?'selected':''}>${esc(k.bank)} - ${esc(k.no)}</option>`).join('');
+  const cfg=dmsgCfg(), cur=cardById(cfg.card)||cardDefault();
+  const opts='<option value="">بدون شماره کارت</option>'+(db.cards||[]).map(k=>`<option value="${k.id}" ${cur&&cur.id==k.id?'selected':''}>${esc(k.bank)} - ${esc(k.no)}</option>`).join('');
   const m=$('#md'); m.className='md';
   m.innerHTML=`<div class="mb"><div class="row"><b>پیام بدهی به ${esc(c.n)}</b><span class="ib" onclick="mc()">✕</span></div>`+
     `<label class="m" style="display:block;margin-top:8px">شماره‌ی مشتری</label><input id="dmPh" value="${esc(c.ph||'')}" style="width:100%">`+
     `<label class="m" style="display:block;margin-top:8px">کارت برای پرداخت</label><select id="dmCard" style="width:100%" onchange="debMsgRefresh('${c.id}')">${opts}</select>`+
-    `<label class="m" style="display:block;margin-top:8px">متن پیام (قابل ویرایش)</label><textarea id="dmTxt" rows="8" style="width:100%">${esc(debMsgText(c,def))}</textarea>`+
-    `<div class="top" style="gap:8px;margin-top:10px"><button class="btn" onclick="smsSend($('#dmPh').value,$('#dmTxt').value)">📩 ارسال با پیامک</button><button class="btn out" onclick="copyTxt($('#dmTxt').value)">📋 کپی متن</button></div></div>`;
+    `<label class="m" style="display:block;margin-top:8px">متن پیام (قابل ویرایش)</label><textarea id="dmTxt" rows="8" style="width:100%">${esc(debMsgText(c,cur))}</textarea>`+
+    `<div class="top" style="gap:8px;margin-top:10px"><button class="btn" onclick="smsSend($('#dmPh').value,$('#dmTxt').value)">📩 ارسال پیام بدهی (پیامک)</button><button class="btn out" onclick="copyTxt($('#dmTxt').value)">📋 کپی متن</button></div></div>`;
 }
 const V={
+  dmsgset(){return dmsgSettingsHtml()},
   inbox(){return inboxHtml()},
   home(){return V.home0()+shortcutsHtml()},
   deb(){return debHtml()},
@@ -908,7 +946,7 @@ function catRen(i){const c=cats()[i];form('تغییر نام دسته',[{k:'n',l
 function catDel(i){const c=cats()[i];ask('دسته‌ی «'+esc(c)+'» حذف شود؟ محصولات آن «بدون دسته» می‌شوند.',()=>{db.g.concat(db.s).forEach(x=>{if((x.cat||'').trim()==c)x.cat=''});if(st.pc==c)st.pc='';save();render();setTimeout(catMgr,50)})}
 function about(){camOff();const m=$('#md');m.className='md';m.innerHTML=`<div class="mb"><div class="row"><b>درباره ما</b><span class="ib" onclick="mc()">✕</span></div><img class="logo" src="${document.querySelector('.logo').src}" style="height:64px;display:block;margin:12px auto"><p style="line-height:2.1;text-align:justify;margin:8px 0">کافی نت و تحریر ترافیک در سال ۱۴۰۲ به منظور تسریع در خدمت رسانی و تسهیل خدمات به عموم مردم به ویژه دانشجویان و دانش آموزان احداث گردید که با ورود مدیریت قدرتمند جناب امیرحسین جعفری به بهبود و افزایش نقاط قوت و پیشرفت چشمگیر آن افزوده گردید یکی دیگر از این خدمات چشمگیر ساخت و پردازش این نرم افزار ویژه می باشد.</p></div>`;m.style.display='flex'}
 const rid=()=>Math.random().toString(36).slice(2,6);
-const COLS=['g','s','c','i','pf','b','x','p','o','dj','msg'],KVK=['us','ap','units','hd','imp','pw','ab','ks','cards'],NEWEST=['i','pf','b','x','o'],SKV=K+'_sv',SKM=K+'_sm',SKQ=K+'_q';
+const COLS=['g','s','c','i','pf','b','x','p','o','dj','msg'],KVK=['us','ap','units','hd','imp','pw','ab','ks','cards','dmsg'],NEWEST=['i','pf','b','x','o'],SKV=K+'_sv',SKM=K+'_sm',SKQ=K+'_q';
 let SV=null,SVQ=[],LAST={kv:{}},VER={},SQ=0,SEP='',SAP=0,SHOLD=0,SVOK=false,SVT=0,SCF=0,SVN=0,KT,SCH=Promise.resolve();
 const NOQ=(r,f)=>{if(SV){r.no=0;r.nw=1}else r.no=db[f]++},rawSave=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(e){}};
 function svCfg(){try{SV=JSON.parse(localStorage.getItem(SKV)||'null');if(SV){SVQ=JSON.parse(localStorage.getItem(SKQ)||'[]');const m=JSON.parse(localStorage.getItem(SKM)||'null');if(m){SQ=m.seq||0;SEP=m.ep||'';VER=m.ver||{}}}}catch(e){SV=null}}
