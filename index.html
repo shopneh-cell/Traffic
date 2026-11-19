@@ -111,10 +111,10 @@ const num=v=>+nz(v).replace(/[,٬ ]/g,'')||0,n=x=>Math.round(+x||0).toLocaleStri
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const day=t=>new Date(t).toLocaleDateString('fa-IR-u-ca-persian');
 const pk=(t,m)=>new Intl.DateTimeFormat('en-u-ca-persian',{year:'numeric',month:'numeric',day:'numeric'}).formatToParts(t).filter(x=>x.type=='year'||x.type=='month'||(!m&&x.type=='day')).map(x=>x.value).join('/');
-const save=()=>{try{if(!SK)db.lm=Date.now();localStorage.setItem(K,JSON.stringify(db));if(db.ks)try{localStorage.setItem('kn_sites',JSON.stringify(db.ks))}catch(e){};if(SV&&!SAP&&!SHOLD)try{svEnq()}catch(e){}if(!SK)abSched();return 1}catch(e){if(!SW){SW=1;alert('حافظه‌ی برنامه پر شده و اطلاعات جدید ذخیره نشد! همین حالا از تنظیمات پشتیبان بگیرید.')}return 0}};
+const save=()=>{try{hashUsersPw();if(!SK)db.lm=Date.now();localStorage.setItem(K,JSON.stringify(db));if(db.ks)try{localStorage.setItem('kn_sites',JSON.stringify(db.ks))}catch(e){};if(SV&&!SAP&&!SHOLD)try{svEnq()}catch(e){}if(!SK)abSched();return 1}catch(e){if(!SW){SW=1;alert('حافظه‌ی برنامه پر شده و اطلاعات جدید ذخیره نشد! همین حالا از تنظیمات پشتیبان بگیرید.')}return 0}};
 window.__trafficSaveSites=function(list){db.ks=list;save()};
 function load(){try{db=JSON.parse(localStorage.getItem(K))}catch(e){}
-if(!db){db={no:3720,g:[],s:[],c:[],i:[],x:[],p:[],b:[]};clRun(CLU);save()}db.pf=db.pf||[];db.fav=db.fav||[];db.o=db.o||[];db.dj=db.dj||[];db.msg=db.msg||[];db.cards=db.cards||[];db.np=db.np||1001;db.ap=db.ap||['sale','inv','items','cust'];db.pw=db.pw||{m:'',a:''};db.us=db.us||[{id:'u0',n:'مدیریت',pw:db.pw.m||'',r:'m'},...(db.pw.a?[{id:'u1',n:'ادمین',pw:db.pw.a,r:'a'}]:[])];db.units=db.units||['عدد','کیلوگرم','گرم','متر مربع'];if(!db.v2){db.g.forEach(x=>{if(x.co===x.pr)x.co=0});db.v2=1}db.hd=db.hd||{n:'کافی‌نت و تحریر ترافیک',ad:'',ph:'',f:'',lg:''};db.ab=db.ab??1;db.p.forEach((x,i)=>{if(!x.id)x.id='p'+x.t+'_'+i});db.x.forEach((x,i)=>{if(!x.id)x.id='x'+x.t+'_'+i})}
+if(!db){db={no:3720,g:[],s:[],c:[],i:[],x:[],p:[],b:[]};if(!NAT())clRun(CLU);save()}db.pf=db.pf||[];db.fav=db.fav||[];db.o=db.o||[];db.dj=db.dj||[];db.msg=db.msg||[];db.cards=db.cards||[];db.np=db.np||1001;db.ap=db.ap||['sale','inv','items','cust'];db.pw=db.pw||{m:'',a:''};db.us=db.us||[{id:'u0',n:'مدیریت',pw:db.pw.m||'',r:'m'},...(db.pw.a?[{id:'u1',n:'ادمین',pw:db.pw.a,r:'a'}]:[])];db.units=db.units||['عدد','کیلوگرم','گرم','متر مربع'];if(!db.v2){db.g.forEach(x=>{if(x.co===x.pr)x.co=0});db.v2=1}db.hd=db.hd||{n:'کافی‌نت و تحریر ترافیک',ad:'',ph:'',f:'',lg:''};db.ab=db.ab??1;db.p.forEach((x,i)=>{if(!x.id)x.id='p'+x.t+'_'+i});db.x.forEach((x,i)=>{if(!x.id)x.id='x'+x.t+'_'+i})}
 const bal=c=>db.i.filter(i=>i.cu==c.id).reduce((a,i)=>a+i.tot-i.pd,0)-db.p.filter(p=>p.cu==c.id).reduce((a,p)=>a+p.a,0);
 const gpf=i=>i.l.reduce((a,l)=>a+nl(l)-l.q*l.co,0);
 const seg=(k,o)=>`<div class="sgs">${o.map(([v,l])=>`<button class="${st[k]==v?'on':''}" onclick="st.${k}='${v}';render()">${l}</button>`).join('')}</div>`;
@@ -636,7 +636,46 @@ function tbarUpdate(){
 (function(){ const r=render; render=function(){ r.apply(this,arguments); try{ tbarUpdate(); }catch(e){} }; })();
 setInterval(()=>{ try{ tbarUpdate(); }catch(e){} }, 3000);
 if(location.hash=='#inbox') setTimeout(()=>{ try{ go('inbox'); }catch(e){} }, 400);   // باز شدن مستقیم صندوق از کافی‌نت یار
+
+// ---------- هش رمز ورود (SHA-256 خالص، همزمان) ----------
+function sha256hex(s){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const bytes=[]; const u=unescape(encodeURIComponent(String(s)));
+  for(let i=0;i<u.length;i++) bytes.push(u.charCodeAt(i)&255);
+  const bitLen=bytes.length*8;
+  bytes.push(0x80); while(bytes.length%64!==56) bytes.push(0);
+  const hi=Math.floor(bitLen/0x100000000), lo=bitLen>>>0;
+  [hi>>>24,(hi>>>16)&255,(hi>>>8)&255,hi&255,lo>>>24,(lo>>>16)&255,(lo>>>8)&255,lo&255].forEach(b=>bytes.push(b));
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let off=0;off<bytes.length;off+=64){
+    const w=new Array(64);
+    for(let i=0;i<16;i++) w[i]=(bytes[off+4*i]<<24)|(bytes[off+4*i+1]<<16)|(bytes[off+4*i+2]<<8)|bytes[off+4*i+3];
+    for(let i=16;i<64;i++){ const s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3); const s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(let i=0;i<64;i++){
+      const S1=rotr(e,6)^rotr(e,11)^rotr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0;
+      const S0=rotr(a,2)^rotr(a,13)^rotr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+    }
+    H=[(H[0]+a)|0,(H[1]+b)|0,(H[2]+c)|0,(H[3]+d)|0,(H[4]+e)|0,(H[5]+f)|0,(H[6]+g)|0,(H[7]+h)|0];
+  }
+  return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+function randHex(){ let s=''; for(let i=0;i<16;i++) s+=Math.floor(Math.random()*256).toString(16).padStart(2,'0'); return s }
+function pwHash(p,salt){ let h=salt+':'+String(p); for(let i=0;i<1500;i++) h=sha256hex(h); return h }
+function checkPw(x,p){ if(!p) return false; if(x.h) return pwHash(p,x.s)===x.h; return x.pw!=null && x.pw!=='' && x.pw===p }
+function hashUsersPw(){ (db.us||[]).forEach(u=>{ if(u.pw){ u.s=u.s||randHex(); u.h=pwHash(u.pw,u.s); delete u.pw } }) }
+function connectHtml(){
+  const linked = !!SV;
+  return `<div class="card" style="text-align:center;padding:18px"><div style="font-size:42px">🖥</div><h3 style="margin:8px 0">اتصال به سرور مغازه</h3>`+
+    (linked
+      ? `<p class="m">به سرور وصل شدید. در حال دریافت اطلاعات و کاربران…</p><button class="btn out" onclick="render()">بررسی دوباره</button>`
+      : `<p class="m">برای استفاده از برنامه ابتدا باید به سرور مغازه وصل شوید. کد اتصال ۶ رقمی را از صفحه‌ی سرور (کامپیوتر مغازه) بگیرید.</p><button class="btn big" onclick="svForm()">اتصال به سرور</button>`)+
+    `</div>`;
+}
 const V={
+  connect(){return connectHtml()},
   fin(){return finHtml()},
   xrep(){return xrepHtml()},
   debmsg(){return debMsgPage()},
@@ -733,8 +772,8 @@ return(M?`${cardsHtml()}${storageHtml()}<div class="card"><b>✍️ امضای �
 +(M?svCard()+`<div class="card"><b>سربرگ و توضیحات فاکتور</b><small style="display:block;margin:4px 0">${esc(db.hd.n)}${db.hd.ph?' · '+esc(db.hd.ph):''}</small><button class="btn out" onclick="hdf()">✏️ ویرایش سربرگ</button></div><div class="card"><b>پشتیبان‌گیری</b>${abUI()}<small style="display:block;margin:4px 0">${db.lb?'آخرین پشتیبان: '+day(db.lb)+'. ':'هنوز پشتیبان نگرفته‌اید. '}حافظه‌ی برنامه ${fd(PCT())}٪ پر است. اطلاعات فعلی: ${csum(cnt(db))}. فایل پشتیبان همه‌ی اطلاعات، رمزها و تنظیمات را دارد؛ آن را جای امن نگه دارید. در گوشی دیگر یا نسخه‌ی ویندوز هم باز می‌شود.</small><div class="g" style="margin:8px 0 0"><button class="btn" onclick="bkSave()">💾 به‌روزرسانی فایل پشتیبان</button><button class="btn out" onclick="bkShare()">📤 ارسال</button></div><button class="btn out" style="margin-top:8px" onclick="bkRestore()">♻️ بازیابی از فایل پشتیبان</button></div>`:'')+(NAT()?`<div class="card"><b>ورود با اثر انگشت</b><small style="display:block;margin:4px 0">${NAT()?'بعد از فعال‌سازی، با اثر انگشت وارد می‌شوید (رمز هم کار می‌کند). تا وقتی گوشی قفل نشده، دوباره رمز یا اثر انگشت نمی‌خواهد.':'این امکان فقط در نسخه‌ی اندروید است.'}</small>${NAT()?`<button class="btn ${bo?'out':''}" style="margin-top:8px" onclick="bioSet()">${bo?'غیرفعال‌سازی اثر انگشت':'فعال‌سازی برای '+esc(CU?CU.n:'')}</button>`:''}</div>`:'')
 +(M&&!SV?`<div class="card"><button class="btn" style="background:var(--e);color:#fff" onclick="ask('همه‌ی اطلاعات پاک شود؟',()=>{try{localStorage.removeItem(K)}catch(e){}load();go('dash')})">پاک‌کردن همه‌ی اطلاعات (برای تست)</button></div>`:'')},
 login(){return `<div class="card" style="margin-top:30px"><img class="logo" src="${document.querySelector('.logo').src}" style="height:60px;display:block;margin:0 auto 12px"><input id="lp" type="password" placeholder="رمز عبور" onkeydown="event.key=='Enter'&&lg()"><button class="btn big" style="margin-top:10px" onclick="lg()">ورود</button>${db.bio&&NAT()?'<button class="btn out" style="margin-top:8px" onclick="bioTry()">🔓 ورود با اثر انگشت</button>':''}</div>`}};
-const NAV=[['dash','🏠','خانه'],['sale','🧾','فروش'],['inv','📄','فاکتورها'],['items','📦','محصولات'],['cust','👥','مشتریان'],['buy','🚚','خرید'],['ord','📋','سفارشات'],['exp','💳','هزینه‌ها'],['rep','📊','گزارش'],['set','⚙️','تنظیمات']],BASE={pv:'inv',ied:'inv',show:'inv',cu:'cust',stmt:'cust',buyn:'buy',buyd:'buy',home:'sale'},can=k=>k=='login'||(ROLE&&(k=='set'||k=='scan'||k=='dash'))||ROLE=='m'||db.ap.includes(k);
-function render(){const L=view=='login',vb=BASE[view]||view;$('#app').innerHTML=V[view]();$('#back').style.display=BASE[view]&&view!='home'?'':'none';$('#nav').style.display=L?'none':'';
+const NAV=[['dash','🏠','خانه'],['sale','🧾','فروش'],['inv','📄','فاکتورها'],['items','📦','محصولات'],['cust','👥','مشتریان'],['buy','🚚','خرید'],['ord','📋','سفارشات'],['exp','💳','هزینه‌ها'],['rep','📊','گزارش'],['set','⚙️','تنظیمات']],BASE={pv:'inv',ied:'inv',show:'inv',cu:'cust',stmt:'cust',buyn:'buy',buyd:'buy',home:'sale'},can=k=>k=='login'||k=='connect'||(ROLE&&(k=='set'||k=='scan'||k=='dash'))||ROLE=='m'||db.ap.includes(k);
+function render(){if(view=='connect'&&SV)view=db.us.some(x=>x.h||x.pw)?'login':'dash';const L=view=='login'||view=='connect',vb=BASE[view]||view;$('#app').innerHTML=V[view]();$('#back').style.display=BASE[view]&&view!='home'?'':'none';$('#nav').style.display=L?'none':'';
 $('#nav').innerHTML=NAV.filter(x=>can(x[0])).map(([k,i,l])=>`<a class="${vb==k?'on':''}" onclick="${k=='scan'?'camTab()':`go('${k}')`}"><i>${i}</i>${l}</a>`).join('');$('#role').textContent=(ROLE=='m'?'پنل مدیریت':ROLE=='a'?(CU?CU.n:'ادمین'):'')+(SV?(SVOK?' 🟢':' 🔴'):'');
 const a=notifUnseen();$('#bell').innerHTML='🔔'+(a?`<i>${n(a)}</i>`:'');view=='buyn'&&pcalc();view=='ied'&&ecalc();view=='pv'&&pvgen();camUI();scrollTo(0,0)}
 function go(v,a){camOff();if(!can(BASE[v]||v))return alert('این بخش برای پنل ادمین فعال نیست');st.ed=st.dl=st.f='';if(v!='items'){st.sm=0;SEL.clear()}if(v!='sale')st.dt='q';const p0=view,ch=v!=view||a!==arg;view=v;arg=a;$('#sr').innerHTML='';$('#q').value='';$('#sbar').style.display='none';render();if(ch&&!NOPUSH)try{(p0=='login'||v=='login'?history.replaceState:history.pushState).call(history,{v,a},'')}catch(e){}}
@@ -1070,8 +1109,8 @@ function sh(){camOff();const b=$('#sbar');b.style.display=b.style.display=='none
 function tg(k,on){db.ap=on?[...new Set([...db.ap,k])]:db.ap.filter(x=>x!=k);save()}
 function toast(t){let d=document.getElementById('toastx');if(!d){d=document.createElement('div');d.id='toastx';d.style.cssText='position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:12px 22px;border-radius:14px;z-index:999;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center';document.body.appendChild(d)}d.textContent=t;d.style.opacity=1;clearTimeout(d._t);d._t=setTimeout(()=>d.style.opacity=0,2600)}
 function printHTML(h){let o=document.getElementById('pp-x');if(!o){o=document.createElement('div');o.id='pp-x';document.body.appendChild(o)}o.innerHTML=h;let st=document.getElementById('pp-xs');if(!st){st=document.createElement('style');st.id='pp-xs';st.textContent='#pp-x{display:none}@media print{body>*:not(#pp-x){display:none!important}#pp-x{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;padding:10mm;font:13px Vazirmatn,Tahoma}#pp-x table{width:100%;border-collapse:collapse}#pp-x td,#pp-x th{border:1px solid #777;padding:5px;text-align:center}}';document.head.appendChild(st)}setTimeout(()=>window.print(),150)}
-function lg(){const p=$('#lp').value,u=db.us.find(x=>x.pw===p);if(!u){toast('رمز اشتباه است');const i=$('#lp');if(i){i.value='';setTimeout(()=>i.focus(),30)}return}CU=u;ROLE=u.r;if(NAT())plug('TrafficScanner').markAuth();go('dash')}
-function logout(){if(db.us.some(x=>x.pw)){ROLE='';CU=null;go('login')}else alert('برای خروج، ابتدا در تنظیمات رمز تعیین کنید')}
+function lg(){const p=$('#lp').value,u=db.us.find(x=>checkPw(x,p));if(!u){toast('رمز اشتباه است');const i=$('#lp');if(i){i.value='';setTimeout(()=>i.focus(),30)}return}CU=u;ROLE=u.r;if(NAT())plug('TrafficScanner').markAuth();go('dash')}
+function logout(){if(db.us.some(x=>x.pw||x.h)){ROLE='';CU=null;go('login')}else alert('برای خروج، ابتدا در تنظیمات رمز تعیین کنید')}
 let CAM=0,cp,lv='',lt=0,TOR=0,BUSY=0,LA=null,CU=null;
 const NAT=()=>{const C=window.Capacitor;return!!(C&&C.isNativePlatform&&C.isNativePlatform())};
 function camUI(){const on=view=='sale',nh=$('#nav').offsetHeight||64;$('#cam').style.display=on?'block':'none';$('#cam').style.bottom=nh+'px';$('#app').style.paddingBottom=on?Math.round(innerHeight*.28+100)+'px':'';$('#camb').style.display=CAM?'flex':'none';$('#camh').style.display=CAM?'none':''}
@@ -1086,7 +1125,7 @@ function unk(v){ask('این بارکد ثبت نشده است: '+esc(v)+'<br>م�
 function torch(){TOR=!TOR;plug('TrafficScanner').torch({on:!!TOR})}
 document.addEventListener('focusin',e=>{if(CAM&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))camOff()});
 function uf(id){const u=id?db.us.find(x=>x.id==id):{r:'a'},m=u.r=='m';form(m?'رمز پنل مدیریت':id?'ویرایش ادمین':'ادمین جدید',[...(m?[]:[{k:'n',l:'نام (هر چه می‌خواهید)',v:u.n}]),{k:'pw',l:'رمز ورود *',v:u.pw}],v=>{const pw=(v.pw||'').trim(),nm=(v.n||'').trim();
-if(!pw)return 'رمز را وارد کنید';if(db.us.some(x=>x.pw===pw&&x.id!=u.id))return 'این رمز برای کاربر دیگری استفاده شده';if(!m&&!nm)return 'نام را وارد کنید';if(!id&&!db.us.find(x=>x.r=='m').pw)return 'ابتدا برای پنل مدیریت رمز بگذارید';
+if(!pw)return 'رمز را وارد کنید';if(db.us.some(x=>x.id!=u.id&&checkPw(x,pw)))return 'این رمز برای کاربر دیگری استفاده شده';if(!m&&!nm)return 'نام را وارد کنید';if(!id&&!db.us.find(x=>x.r=='m').pw)return 'ابتدا برای پنل مدیریت رمز بگذارید';
 if(id){u.pw=pw;if(!m)u.n=nm}else db.us.push({id:'u'+Date.now(),n:nm,pw,r:'a'});save();if(NAT())plug('TrafficScanner').markAuth();render()})}
 function ud(id){ask('این ادمین حذف شود؟',()=>{db.us=db.us.filter(x=>x.id!=id);save();render()})}
 function nf(s){return String(s||'').toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ةۀ]/g,'ه').replace(/[أإآ]/g,'ا').replace(/[\u064B-\u065F\u0640]/g,'').replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776).replace(/[\u200c\u200f\u200e_\-\/\\.,،؛:()\[\]]/g,' ').replace(/(\D)(\d)/g,'$1 $2').replace(/(\d)(\D)/g,'$1 $2').replace(/\s+/g,' ').trim()}
@@ -1272,10 +1311,10 @@ function svOut(auto){clearInterval(SVT);SVT=0;if(SVQ.length){try{const old=JSON.
 async function svReplace(){if(!SV)return;if(!confirm('این پشتیبان روی سرور هم جایگزین شود؟ همه‌ی دستگاه‌های دیگر هم همین اطلاعات را می‌گیرند.\n(اگر «لغو» بزنید، این دستگاه از سرور جدا می‌شود.)')){svOut();return}
  try{await svf('/api/import',{method:'POST',body:JSON.stringify({db:JSON.parse(bkJson()).db,force:true})});SHOLD=0;await load0();alert('سرور هم با این پشتیبان جایگزین شد.')}catch(e){svOut();alert('جایگزینی روی سرور ناموفق بود؛ این دستگاه از سرور جدا شد: '+(e.message||e))}}
 function svCard(){const on=!!SV;return `<div class="card"><b>اتصال به سرور مغازه</b><small style="display:block;margin:4px 0">${on?'متصل به '+esc(SV.url)+' · دستگاه: '+esc(SV.name)+' · '+(SVOK?'🟢 همگام':'🔴 قطع')+' · در صف: '+n(SVQ.length)+'.':'اطلاعات همه‌ی دستگاه‌ها (گوشی‌ها و کامپیوترها) روی سرور مغازه ذخیره و همگام می‌شود. آدرس و کد اتصال را روی کامپیوتر سرور در صفحه‌ی http://localhost:8080 یا آیکون همگام‌سازی ببینید.'}</small>${on?'<button class="btn out" onclick="svOut()">قطع اتصال</button>':'<button class="btn" onclick="svForm()">اتصال به سرور</button>'}</div>`}
-function svForm(){const web=!NAT()&&/^https?:/.test(location.protocol);form('اتصال به سرور مغازه',[{k:'u',l:'آدرس سرور (مثل 192.168.1.20:8080)',v:web?location.host:''},{k:'c',l:'کد اتصال ۶ رقمی'},{k:'n',l:'نام این دستگاه',v:NAT()?'گوشی':'کامپیوتر'}],async o=>{
+function svForm(){const web=!NAT()&&/^https?:/.test(location.protocol);form('اتصال به سرور مغازه',[{k:'u',l:'آدرس سرور (مثل 192.168.1.20:8080)',v:web?location.host:''},{k:'c',l:'کد اتصال ۶ رقمی'}],async o=>{
  const raw=String(o.u||'').trim().replace(/^https?:\/\//,'').replace(/\/+$/,'');if(!raw)return 'آدرس را وارد کنید';const addr=/:\d+$/.test(raw)?raw:raw+':8080';const u='http://'+addr; let p;try{p=await fetch(u+'/api/ping',{signal:AbortSignal.timeout(6000)}).then(r=>r.json())}catch(e){return 'به سرور «'+addr+'» وصل نشد.\n۱) روی کامپیوتر سرور، برنامه‌ی ترافیک باز و حالت «سرور» باشد.\n۲) آدرس را دقیق از آیکون همگام‌سازی کپی کنید (همراه با :8080).\n۳) گوشی و کامپیوتر باید به یک وای‌فای عادی وصل باشند (نه مهمان و نه هات‌اسپات جدا).\n۴) در ویندوز، وای‌فای را «خصوصی» (Private) کنید؛ اگر باز هم نشد، فایروال را برای پورت ۸۰۸۰ باز کنید.\n۵) در مرورگر همان گوشی، آدرس «http://'+addr+'» را باز کنید. اگر صفحه‌ی سرور آمد اما برنامه وصل نشد، تنظیمات اندروید را بررسی کنید (فایل README-ANDROID).'}
  if(!p||p.app!='traffic-server')return 'این آدرس، سرور ترافیک نیست.';if(p.proto!==1)return 'نسخه‌ی برنامه و سرور با هم سازگار نیستند.';
- let t;try{const r=await fetch(u+'/api/pair',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:nz(o.c).trim(),name:o.n||'دستگاه'})});if(r.status==403)return 'کد اتصال اشتباه است.';if(!r.ok)return 'اتصال ناموفق بود ('+r.status+').';t=await r.json()}catch(e){return 'اتصال ناموفق بود.'}
+ let t;try{const r=await fetch(u+'/api/pair',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:nz(o.c).trim(),name:'دستگاه-'+(NAT()?'گوشی':'کامپیوتر')+'-'+randHex().slice(0,4)})});if(r.status==403)return 'کد اتصال اشتباه است.';if(!r.ok)return 'اتصال ناموفق بود ('+r.status+').';t=await r.json()}catch(e){return 'اتصال ناموفق بود.'}
  SV={url:u,token:t.token,dev:t.dev,name:o.n||'دستگاه'};localStorage.setItem(SKV,JSON.stringify(SV));try{SVQ=SVQ.concat(JSON.parse(localStorage.getItem(SKB)||'[]'));localStorage.removeItem(SKB)}catch(e){}
  try{const s=await svf('/api/state'),has=Object.values(s.ents).some(a=>a.length);
   if(!has){if(!confirm('سرور هنوز خالی است. اطلاعات همین دستگاه ('+csum(cnt(db))+') روی سرور بارگذاری شود؟')){svOut();return 'لغو شد'}await svf('/api/import',{method:'POST',body:JSON.stringify({db:JSON.parse(bkJson()).db})})}
@@ -1390,5 +1429,5 @@ function notifUnseen(){const s=notifSeen();return notifSigs().filter(x=>!s.inclu
 function notifMarkSeen(){localStorage.setItem('notifSeen',JSON.stringify(notifSigs()));setTimeout(()=>{try{$('#bell').innerHTML='🔔'}catch(e){}},0)}
 function sls(f){const A=db.i.filter(i=>f(i.t)).slice(0,80);return `<p class="m" style="margin:10px 14px 0"><b>فروش‌های این بازه (${n(A.length)}) — برای فاکتور یا ویرایش لمس کنید</b></p>`+A.map(i=>{const c=db.c.find(x=>x.id==i.cu);return `<div class="card row" onclick="go('show','${i.id}')"><span>${day(i.t)} ${new Date(i.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})}<br><small>${c?esc(c.n):esc(i.cn||'بدون مشتری')} · ${i.no?'فاکتور '+fd(i.no):'بدون فاکتور'}</small></span><b>${n(i.tot)}</b></div>`}).join('')}
 function addC(id){const c=id?db.c.find(x=>x.id==id):{};form(id?'ویرایش مشتری':'مشتری جدید',[{k:'n',l:'نام مشتری / عنوان *',v:c.n},{k:'ph',l:'شماره تماس',v:c.ph},{k:'cd',l:'کد مشتری',v:c.cd},{k:'ad',l:'آدرس',t:'area',v:c.ad}],o=>{if(!o.n.trim())return 'نام را وارد کنید';if(id)Object.assign(c,{n:o.n.trim(),ph:o.ph,cd:o.cd.slice(0,10),ad:o.ad});else{const x={id:'c'+Date.now(),n:o.n.trim(),ph:o.ph,cd:o.cd.slice(0,10),ad:o.ad};db.c.push(x);if(view=='sale')cc=x.id}save();render()})}
-load();if(db.ks)try{localStorage.setItem('kn_sites',JSON.stringify(db.ks))}catch(e){};try{catalogApply()}catch(e){};try{dedupeProducts(true)}catch(e){};hdi();svCfg();if(SV)svBuildLast();if(db.us.some(x=>x.pw)&&localStorage.getItem('trf_server')!=='1'){ROLE='';view='login'}else CU=db.us.find(x=>x.r=='m')||CU;render();try{history.replaceState({v:view,a:arg},'')}catch(e){}if(view=='login')bioTry();if(db.ab&&NAT()&&(db.lm||0)>(db.la||0))abSched();if(SV)svStart();
+load();if(db.ks)try{localStorage.setItem('kn_sites',JSON.stringify(db.ks))}catch(e){};try{if(!NAT())catalogApply()}catch(e){};try{dedupeProducts(true)}catch(e){};hdi();svCfg();if(SV)svBuildLast();if(NAT()&&!SV){ROLE='';CU=null;view='connect'}else if(db.us.some(x=>x.pw||x.h)&&localStorage.getItem('trf_server')!=='1'){ROLE='';view='login'}else CU=db.us.find(x=>x.r=='m')||CU;render();setInterval(()=>{if(view=='connect'&&SV&&db.us.some(x=>x.h||x.pw)){view='login';render()}},800);try{history.replaceState({v:view,a:arg},'')}catch(e){}if(view=='login')bioTry();if(db.ab&&NAT()&&(db.lm||0)>(db.la||0))abSched();if(SV)svStart();
 </script></body></html>
