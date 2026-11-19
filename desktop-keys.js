@@ -4,6 +4,8 @@
   'use strict';
   if (window.__trafficKeys) return;
   window.__trafficKeys = true;
+  // کلید فیزیکی را می‌خواند تا با کیبورد فارسی هم کار کند (مثلاً Ctrl+D وقتی حرف «ی» است)
+  function keyOf(e) { if (e.code && /^Key[A-Z]$/.test(e.code)) return e.code.charAt(3).toLowerCase(); return String(e.key || '').toLowerCase(); }
 
   // ---------- جستجوی دقیق (فقط ویندوز) ----------
   // همه‌ی کلمات باید پیدا شوند؛ حدس تقریبی (فاصله‌ی ویرایشی) و نتیجه‌ی «تا حدی شبیه» نداریم.
@@ -47,7 +49,7 @@
   function run(f) { try { f(); } catch (e) { /* ignore */ } }
 
   document.addEventListener('keydown', function (e) {
-    var ctrl = e.ctrlKey || e.metaKey, k = (e.key || '').toLowerCase();
+    var ctrl = e.ctrlKey || e.metaKey, k = keyOf(e);
     if (e.key === 'Escape') {
       var md = document.getElementById('md');
       if (md && md.innerHTML.trim()) { e.preventDefault(); md.innerHTML = ''; return; }
@@ -96,7 +98,7 @@
   };
   document.addEventListener('keydown', function (e) {
     if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
-    var k = String(e.key).toLowerCase();
+    var k = keyOf(e);
     if (k === 'd') { e.preventDefault(); go('sale'); }
     else if (k === 'f') { e.preventDefault(); go('items'); setTimeout(function () { var q = document.querySelector('.srch'); if (q) q.focus(); }, 200); }
     else if (k === 's') { e.preventDefault(); if (typeof bkSave === 'function') bkSave(); }
