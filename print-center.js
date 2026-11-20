@@ -6,7 +6,7 @@
 
   // بخش قابل چاپ: اگر بخش مشخصی وجود داشت همان، وگرنه کل صفحه (با استایل‌های @media print)
   function printable() {
-    return document.querySelector('.iv-paper, [data-print-area], #printArea, .print-area, #pv, #preview') || document.body;
+    return document.querySelector('.iv-paper, [data-print-area], #printArea, .print-area, #pv, #preview') || document.getElementById('app') || document.body;
   }
 
   function allCss() {
@@ -28,7 +28,7 @@
     const dir = document.documentElement.getAttribute('dir') || 'rtl';
     const html = '<!doctype html><html lang="fa" dir="' + dir + '"><head><meta charset="utf-8">' +
       '<style>' + allCss() + '\n@page{size:A4;margin:10mm}html,body{background:#fff!important;color:#000!important}html,body{margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:visible!important}#pp,#pp *{margin-left:auto;margin-right:auto}#pp img{page-break-after:auto!important;page-break-before:auto!important;max-width:100%!important;max-height:272mm!important;height:auto!important;width:auto!important;display:block;margin:0 auto}#pp img+img{page-break-before:always!important}img{page-break-inside:avoid}</style>' +
-      '</head><body>' + clone.outerHTML + '</body></html>';
+      '</head><body><div id="pp">' + clone.outerHTML + '</div></body></html>';
     api.openPreview({ html, title: String(title || document.title || 'چاپ').slice(0, 160) })
       .catch((error) => alert('خطا در مرکز چاپ: ' + error.message));
     return true;
