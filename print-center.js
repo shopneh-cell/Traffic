@@ -19,6 +19,8 @@
   }
 
   function openCenter(title) {
+  if (Date.now() - (window.__pcLast || 0) < 1500) return true;   // جلوگیری از دو بار چاپ پشت‌سرهم
+  window.__pcLast = Date.now();
     const api = window.trafficYarAddons && window.trafficYarAddons.print;
     if (!api) { if (window.desk && window.desk.print) return window.desk.print(); return false; }
     const clone = printable().cloneNode(true);
