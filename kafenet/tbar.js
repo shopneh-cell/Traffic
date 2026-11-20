@@ -34,9 +34,9 @@
     var k = unread(), ex = expanded();
     var badge = k ? '<b style="background:#e53935;border-radius:10px;padding:0 7px">' + k + '</b>' : '';
     bar.innerHTML = ex
-      ? '<span data-act="open" style="cursor:pointer">📥 صندوق ' + badge + '</span>' +
-        '<span style="display:flex;gap:10px"><span data-act="open" style="cursor:pointer">💬 چت</span><span data-act="toggle" style="cursor:pointer">⬆ جمع کن</span></span>'
-      : '<span data-act="toggle" style="cursor:pointer;width:100%;text-align:right">⬇ 📥 صندوق ' + badge + '</span>';
+      ? '<span data-act="open" style="cursor:pointer;font-size:22px">📥' + badge + '</span>' +
+        '<span data-act="toggle" style="cursor:pointer;font-size:20px;padding:0 8px">▲</span>'
+      : '<span data-act="toggle" style="cursor:pointer;width:100%;text-align:center;font-size:18px">▼' + badge + '</span>';
     document.body.style.paddingTop = ex ? '42px' : '30px';
     if (last >= 0 && k > last) beep();
     last = k;

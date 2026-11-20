@@ -139,7 +139,7 @@
     var party = '<div class="iv-party"><b>فروشنده</b><span>' + esc(inv.seller || sh.name) + '</span></div>' +
                 '<div class="iv-party"><b>خریدار</b><span>' + esc(inv.buyer || '—') + (inv.bphone ? '<br>' + fa(inv.bphone) : '') + (inv.baddr ? '<br>' + esc(inv.baddr) : '') + '</span></div>';
     return '<div class="iv-paper iv-' + IV.tpl + '">' +
-      '<div class="iv-top"><div class="iv-shop">' + esc(sh.name) + '</div>' + (sh.phone || sh.addr ? '<div class="iv-contact">' + esc(sh.phone ? fa(sh.phone) : '') + (sh.phone && sh.addr ? ' · ' : '') + esc(sh.addr || '') + '</div>' : '') + '</div>' +
+      '<div class="iv-top"><div class="iv-shop">' + esc(sh.name) + '</div>' + (sh.phone || sh.addr ? '<div class="iv-contact">' + esc(sh.phone ? fa(sh.phone) : '') + (sh.phone && sh.addr ? '<br>' : '') + esc(sh.addr || '') + '</div>' : '') + '</div>' +
       '<div class="iv-title">فاکتور فروش</div>' +
       '<div class="iv-meta"><span>شماره: <b>' + (IV.id ? esc(fa(inv.no)) : 'پیش‌نویس') + '</b></span><span>تاریخ: <b>' + esc(fa(inv.date)) + '</b></span></div>' +
       '<div class="iv-parties">' + party + '</div>' +
